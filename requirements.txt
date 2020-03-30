@@ -1,0 +1,3 @@
+ebooklib==0.17.1
+requests==2.23.0
+selenium-wire==1.0.11

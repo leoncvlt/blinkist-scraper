@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>{title}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Libre+Baskerville&display=swap"
+      rel="stylesheet"
+    />
+    <style type="text/css">
+      body {
+        font-family: "Libre Baskerville", serif;
+        font-size: 1rem;
+        color: #444;
+        margin: auto;
+        max-width: 40rem;
+        line-height: 1.6;
+        padding: 1rem;
+      }
+      h2,
+      hr {
+        page-break-before: always;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      style="text-align: center;
+      background: #{main_color}"
+    >
+      <img src="{image_url}" style="max-height: 256px;" />
+    </div>
+
+    <div>
+      <h1 style="text-align: center; color: #{text_color}">{title}</h1>
+      {about_the_book} {__chapters__}
+
+      <hr />
+      <h3 style="text-align: center;">About the author</h3>
+      {about_the_author}
+    </div>
+  </body>
+</html>
