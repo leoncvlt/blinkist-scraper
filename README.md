@@ -40,12 +40,12 @@ optional arguments:
 ## Basic usage
 `python main.py email password` where email and password are the login details to your premium Blinkist account.
 
-The script uses Selenium with a Chrome driver to scrape the site. Blinkist uses captchas on login, so the script will wait for the user to solve it and login on first run (altough the email and password fields are filled in automatically from the arguments)  - the sessions cookies are stored so the script can be run in headless mode with the appropriate flag afterwards. The output files are stored in the `books` folder, arranged in subfolders by category and by the book's title and author.
+The script uses Selenium with a Chrome driver to scrape the site. Blinkist uses captchas on login, so the script will wait for the user to solve it and login on first run (although the email and password fields are filled in automatically from the arguments)  - the sessions cookies are stored so the script can be run in headless mode with the appropriate flag afterwards. The output files are stored in the `books` folder, arranged in subfolders by category and by the book's title and author.
 
 ## Customizing HTML output
 The script builds a nice-looking html version of the book by using the 'book.html' and 'chapter.html' files in the 'templates' folder as a base. Every parameter between curly braces in those files (e.g. `{title}`) is replaced by the appropriate value from the book metadata (dumped in the `dump` folder upon scraping), following a 1-to-1 naming convention with the json parameters (.e.g `{title}` will be replaced by the `title` parameter, `{who_should_read}` but the `who_should_read` one and so on). 
 
-The special field `{__chapters__}` is replaced with all the book's chapter. Chapters are created by parsing each `chapter` object in the book metadata and using the `chapter.html` template file in the same fashion, replacing tokens with the parameters inside the `chapter` object. 
+The special field `{__chapters__}` is replaced with all the book's chapters. Chapters are created by parsing each `chapter` object in the book metadata and using the `chapter.html` template file in the same fashion, replacing tokens with the parameters inside the `chapter` object. 
 
 ## Generating .pdf
 Add the `--create-pdf` argument to the script to generate a .pdf file from the .html one. This requires the [wkhtmltopdf](https://wkhtmltopdf.org/) tool to be installed and present in the PATH.
@@ -57,4 +57,4 @@ The script download audio blinks as well. This is done by waiting for a request 
 Add the `--concat-audio` argument to the script to concatenate the individual audio blinks into a single file and tag it with the appropriate book title and author. This requires the [ffmpeg](https://www.ffmpeg.org/) tool to be installed and present in the PATH.
 
 ## Processing book dumps with no scraping
-During scraping, the script saves all book's metadata in json files inside the `dump` folder. Those can be used by the script to re-generate the .html, .epub and .pdf output files without having to scrape the website again. To do so, the `--no-scrape` argument to the script.
+During scraping, the script saves all book's metadata in json files inside the `dump` folder. Those can be used by the script to re-generate the .html, .epub and .pdf output files without having to scrape the website again. To do so, pass the `--no-scrape` argument to the script.
