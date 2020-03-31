@@ -20,5 +20,8 @@ def get_book_pretty_filepath(book_json):
 def get_book_pretty_filename(book_json, extension=""):
   return f"{book_json['author']} - {book_json['title']}" + extension
 
+def get_book_short_pretty_filename(book_json, extension=""):
+  return f"{book_json['title']}" + extension
+
 def is_installed(tool):
   return which(tool)

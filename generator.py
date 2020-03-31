@@ -129,7 +129,7 @@ def combine_audio(book_json, files):
   # ffmpeg fails on windows if the output filepath is longer than 260 chars
   if len(tagged_audio_file) >= 260:
     print(f"[!] ffmpeg output file longer than 260 characters. Trying shorter filename...")
-    tagged_audio_file = os.path.abspath(os.path.join(filepath, book_json['title'] + ".m4a"))
+    tagged_audio_file = os.path.abspath(os.path.join(filepath, get_book_short_pretty_filename(".m4a")))
     if len(tagged_audio_file) >= 260:
       print(f"[!] shorter filename still too long! Consider running the script from a shorter path.")
       return

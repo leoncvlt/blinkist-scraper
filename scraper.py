@@ -186,7 +186,8 @@ def dump_book(book_json):
 def scrape_book_audio(driver, book_json): 
   # check if there's a concatenated audio file already
   concat_audio = os.path.join(get_book_pretty_filepath(book_json), get_book_pretty_filename(book_json, ".m4a"))
-  if (os.path.exists(concat_audio)):
+  short_concat_audio = os.path.join(get_book_pretty_filepath(book_json), get_book_short_pretty_filename(book_json, ".m4a"))
+  if (os.path.exists(concat_audio) or os.path.exists(short_concat_audio)):
     print(f"[.] Audio file for {book_json['slug']} already exixts, skipping scraping audio...")
     return False
 
