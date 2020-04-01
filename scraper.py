@@ -149,8 +149,8 @@ def scrape_book(driver, book_url, category="Uncategorized", force=False):
   book = book_json['book']
 
   # sanitize the book's title and author since they will be used for paths and such
-  book['title'] = re.sub(r'[\\/*?:"<>|]', "", book['title']).strip()
-  book['author'] = re.sub(r'[\\/*?:"<>|]', "", book['author']).strip()
+  book['title'] = re.sub(r'[\\/*?:"<>|.]', "", book['title']).strip()
+  book['author'] = re.sub(r'[\\/*?:"<>|.]', "", book['author']).strip()
 
   # scrape the chapter's content on the reader page
   # and extend the book json data by inserting the scraped content
