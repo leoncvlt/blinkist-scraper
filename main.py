@@ -9,7 +9,7 @@ def check_cooldown(value):
     raise argparse.ArgumentTypeError("Can't be smaller than 1")
   return ivalue
 
-parser = argparse.ArgumentParser(description='Example with non-optional arguments')
+parser = argparse.ArgumentParser(description='Scrape blinkist.com and generate pretty output')
 parser.add_argument('email', help='The email to log into your premium Blinkist account')
 parser.add_argument('password', help='The password to log into your premium Blinkist account')
 parser.add_argument('--cooldown', type=check_cooldown, default=1, help='Seconds to wait between scraping books, and downloading audio files. Can\'t be smaller than 1')
