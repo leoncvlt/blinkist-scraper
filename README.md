@@ -6,6 +6,8 @@ A python script to download book summaries and audio from [Blinkist](https://www
 
 `pip install -r requirements.txt`
 
+This script uses [ChromeDriver](chromedriver.chromium.org) to automate the Google Chrome browser - therefore Google Chrome needs to be installed in order to work.
+
 ## Usage
 
 ```text
