@@ -115,5 +115,5 @@ books/*
 dump/*
 debug.log
 webdrive.log
-evenvo.bat
+*.bat
 cookies.pkl
