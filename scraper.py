@@ -118,14 +118,14 @@ def get_categories(driver):
   return categories_links;
 
 def get_all_books_for_categories(driver, category):
-  print(f"[.] getting all books for category {category['label']}...")
+  print(f"[.] Getting all books for category {category['label']}...")
   books_links = []
   driver.get(category['url'] + '/books')
   books_items = driver.find_elements_by_class_name("letter-book-list__item")
   for item in books_items:
     href = item.get_attribute('href')
     books_links.append(href);
-  print(f"[.] found {len(books_links)} books")
+  print(f"[.] Found {len(books_links)} books")
   return books_links;
 
 def scrape_book(driver, book_url, category="Uncategorized", force=False):
@@ -214,16 +214,32 @@ def scrape_book_audio(driver, book_json):
     return False;
 
   audio_files = []
+  error = False
   # go through every chapter object in the book json data
   # and build a request to the audio endpoint using the book and chapter ID
   for chapter_json in book_json['chapters']:
     time.sleep(1.0)
     api_url = f"https://www.blinkist.com/api/books/{book_json['id']}/chapters/{chapter_json['id']}/audio";
     audio_request = requests.get(api_url, headers=audio_request_headers)
-    audio_url = audio_request.json()['url']
-    audio_file = download_book_chapter_audio(book_json, chapter_json['order_no'], audio_url)
-    audio_files.append(audio_file)
-  return audio_files;
+    try:
+      audio_request_json = audio_request.json();
+      if 'url' in audio_request_json:
+        audio_url = audio_request_json['url']
+        audio_file = download_book_chapter_audio(book_json, chapter_json['order_no'], audio_url)
+        audio_files.append(audio_file)
+      else:
+        print('[!] Could not find audio url in request, aborting audio scrape...')
+        error = True
+        break
+    except json.decoder.JSONDecodeError:
+      print('[!] Received malformed json data, aborting audio scrape...')
+      error = True
+      break
+  
+  if not error:
+    return audio_files
+  else:
+    return []
 
 def download_book_chapter_audio(book_json, chapter_no, audio_url):
   filepath = get_book_pretty_filepath(book_json)
