@@ -12,6 +12,8 @@ def check_cooldown(value):
 parser = argparse.ArgumentParser(description='Scrape blinkist.com and generate pretty output')
 parser.add_argument('email', help='The email to log into your premium Blinkist account')
 parser.add_argument('password', help='The password to log into your premium Blinkist account')
+parser.add_argument('--language', choices={'en', 'de'}, default='en', help='The language to scrape books in - either \'en\' for english or \'de\' for german')
+parser.add_argument('--match-language', action='store_true', default=False, help='Skip scraping books if not in the requested language (not all book are avaible in german)')
 parser.add_argument('--cooldown', type=check_cooldown, default=1, help='Seconds to wait between scraping books, and downloading audio files. Can\'t be smaller than 1')
 parser.add_argument('--headless', action='store_true', default=False, help='Start the automated web browser in headless mode. Works only if you already logged in once')
 parser.add_argument('--audio', action='store_true', default=True, help='Download the audio blinks for each book')
@@ -51,22 +53,24 @@ if __name__ == '__main__':
       if not scraper.has_login_cookies():
         start_headless = False
       driver = scraper.initialize_driver(headless=start_headless)
-      is_logged_in = scraper.login(driver, args.email, args.password)
+      is_logged_in = scraper.login(driver, args.language, args.email, args.password)
       if (is_logged_in):
-        categories = scraper.get_categories(driver)
+        categories = scraper.get_categories(driver, args.language)
         for category in categories:
           books_urls = scraper.get_all_books_for_categories(driver, category)
           for book_url in books_urls:
-            book_json, dump_exists = scraper.scrape_book(driver, book_url, category=category)
-            if (args.audio):
-              audio_files = scraper.scrape_book_audio(driver, book_json)
-              if (audio_files and args.concat_audio):
-                generator.combine_audio(book_json, audio_files)
-            processed_books = process_book_json(book_json, processed_books)
-            # if we processed the book from an existing dump 
-            # no scraping was involved, no need to cooldown
-            if not dump_exists:
-              time.sleep(args.cooldown)
+            match_language = args.language if args.match_language else ""
+            book_json, dump_exists = scraper.scrape_book(driver, book_url, category=category, match_language=match_language)
+            if (book_json):
+              if (args.audio):
+                audio_files = scraper.scrape_book_audio(driver, book_json, args.language)
+                if (audio_files and args.concat_audio):
+                  generator.combine_audio(book_json, audio_files)
+              processed_books = process_book_json(book_json, processed_books)
+              # if we processed the book from an existing dump 
+              # no scraping was involved, no need to cooldown
+              if not dump_exists:
+                time.sleep(args.cooldown)
   except KeyboardInterrupt:
     print('[#] Interrupted by user')
     finish(start_time, processed_books)

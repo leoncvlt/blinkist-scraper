@@ -64,9 +64,9 @@ def initialize_driver(headless=True):
     options=chrome_options)
   return driver;
 
-def login(driver, email, password):
+def login(driver, language, email, password):
   # we need to navigate to a page first in order to load eventual cookies
-  driver.get('https://www.blinkist.com/')
+  driver.get(f'https://www.blinkist.com/{language}')
   is_logged_in = False;
 
   # if we have any stored login cookie, load them into the driver
@@ -75,7 +75,7 @@ def login(driver, email, password):
   
   # navigate to the login page and check for the login email input
   # if not found, assume we're logged in
-  sign_in_url = 'https://www.blinkist.com/nc/login'
+  sign_in_url = f'https://www.blinkist.com/{language}/nc/login'
   driver.get(sign_in_url)
   try:
     driver.find_element_by_id('login-form_login_email')
@@ -100,8 +100,8 @@ def login(driver, email, password):
   store_login_cookies(driver)
   return True;
 
-def get_categories(driver):
-  url_with_categories = 'https://www.blinkist.com/nc/login'
+def get_categories(driver, language):
+  url_with_categories = f'https://www.blinkist.com/{language}/nc/login'
   driver.get(url_with_categories)
   categories_links = []
   categories_list = driver.find_element_by_class_name("category-list")
@@ -128,7 +128,7 @@ def get_all_books_for_categories(driver, category):
   print(f"[.] Found {len(books_links)} books")
   return books_links;
 
-def scrape_book(driver, book_url, category="Uncategorized", force=False):
+def scrape_book(driver, book_url, match_language="", category="Uncategorized", force=False):
   # check if this book has already been dumped, unless we are forcing scraping
   # if so return the content of the dump, alonside with a flash saying it already existed
   if (os.path.exists(get_book_dump_filename(book_url)) and not force):
@@ -147,6 +147,10 @@ def scrape_book(driver, book_url, category="Uncategorized", force=False):
   book_id = reader.get_attribute('data-book-id')
   book_json = requests.get(url=f'https://api.blinkist.com/v4/books/{book_id}').json()
   book = book_json['book']
+
+  if (match_language and book['language'] != match_language):
+    print(f"[!] Book not available in the selected language ({match_language}), skipping scraping...")
+    return None, False
 
   # sanitize the book's title and author since they will be used for paths and such
   book['title'] = re.sub(r'[\\/*?:"<>|.]', "", book['title']).strip()
@@ -183,7 +187,7 @@ def dump_book(book_json):
     json.dump(book_json, outfile, indent=4)
   return filepath
 
-def scrape_book_audio(driver, book_json): 
+def scrape_book_audio(driver, book_json, language): 
   # check if there's a concatenated audio file already
   concat_audio = os.path.join(get_book_pretty_filepath(book_json), get_book_pretty_filename(book_json, ".m4a"))
   short_concat_audio = os.path.join(get_book_pretty_filepath(book_json), get_book_short_pretty_filename(book_json, ".m4a"))
@@ -201,7 +205,7 @@ def scrape_book_audio(driver, book_json):
   driver.scopes = ['.*blinkist.*']
 
   # navigate to the book's reader page which also contains the media player for the first audio blink
-  book_reader_url = f'https://www.blinkist.com/en/nc/reader/{book_json["slug"]}'
+  book_reader_url = f'https://www.blinkist.com/{language}/nc/reader/{book_json["slug"]}'
   driver.get(book_reader_url)
 
   # wait until the request to the audio endpoint is captured,
@@ -232,7 +236,8 @@ def scrape_book_audio(driver, book_json):
         error = True
         break
     except json.decoder.JSONDecodeError:
-      print('[!] Received malformed json data, aborting audio scrape...')
+      print(f'[!] Received malformed json data: {audio_request_json.text}')
+      print('[!] Could not find audio url in request, aborting audio scrape...')
       error = True
       break
   
