@@ -21,7 +21,11 @@ positional arguments:
   password             The password to log into your premium Blinkist account 
                                                                               
 optional arguments:                                                           
-  -h, --help           show this help message and exit                        
+  -h, --help           show this help message and exit
+  --language {en,de}   The language to scrape books in - either 'en' for
+                       english or 'de' for german (default en)
+  --match-language     Skip scraping books if not in the requested language
+                       (not all book are avaible in german, default false)
   --cooldown COOLDOWN  Seconds to wait between scraping books, and downloading
                        audio files. Can't be smaller than 1 (default 1)                  
   --headless           Start the automated web browser in headless mode. Works
