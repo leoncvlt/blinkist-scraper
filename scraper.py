@@ -236,7 +236,7 @@ def scrape_book_audio(driver, book_json, language):
         error = True
         break
     except json.decoder.JSONDecodeError:
-      print(f'[!] Received malformed json data: {audio_request_json.text}')
+      print(f'[!] Received malformed json data: {audio_request.text}')
       print('[!] Could not find audio url in request, aborting audio scrape...')
       error = True
       break
