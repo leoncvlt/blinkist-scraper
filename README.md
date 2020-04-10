@@ -11,10 +11,11 @@ This script uses [ChromeDriver](chromedriver.chromium.org) to automate the Googl
 ## Usage
 
 ```text
-usage: main.py [-h] [--cooldown COOLDOWN] [--headless] [--audio]              
-               [--concat-audio] [--no-scrape] [--create-html] [--create-epub] 
-               [--create-pdf]                                                 
-               email password                                                 
+usage: main.py [-h] [--language {de,en}] [--match-language]
+               [--cooldown COOLDOWN] [--headless] [--audio] [--concat-audio]
+               [--no-scrape] [--book BOOK] [--category CATEGORY]
+               [--create-html] [--create-epub] [--create-pdf]
+               email password                                              
                                                                               
 Example with non-optional arguments                                           
                                                                               
@@ -36,7 +37,12 @@ optional arguments:
   --concat-audio       Concatenate the audio blinks into a single file and tag
                        it. Requires ffmpeg (default false)                                    
   --no-scrape          Don't scrape the website, only process existing json   
-                       files in the dump folder (default false)                               
+                       files in the dump folder (default false)
+  --book BOOK          Scrapes this book only, takes the blinkist url for the
+                       book (e.g. https://www.blinkist.com/en/books/... or
+                       nhttps://www.blinkist.com/en/nc/reader/...)
+  --category CATEGORY  When scraping a single book, categorize it under this
+                       category (works with '--book' only)
   --create-html        Generate a formatted html document for the book (default true)        
   --create-epub        Generate a formatted epub document for the book (default true)       
   --create-pdf         Generate a formatted pdf document for the book.
@@ -64,3 +70,6 @@ Add the `--concat-audio` argument to the script to concatenate the individual au
 
 ## Processing book dumps with no scraping
 During scraping, the script saves all book's metadata in json files inside the `dump` folder. Those can be used by the script to re-generate the .html, .epub and .pdf output files without having to scrape the website again. To do so, pass the `--no-scrape` argument to the script.
+
+# Quirks & known Bugs
+- Some people have had troubles when dealing with long generated book files (> 260 characters in Windows). Although this should be handled gracefully by the script, if you keep seeing "FileNotFoundError" when trying to create the .html / .m4a files, try and turn on long filenames support on your system: https://www.itprotoday.com/windows-10/enable-long-file-name-support-windows-10
