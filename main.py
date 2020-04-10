@@ -46,7 +46,8 @@ def scrape_book(driver, processed_books, book_url, category, match_language):
   return dump_exists
 
 def finish(driver, start_time, processed_books):
-  driver.close()
+  if (driver): 
+    driver.close()
   elapsed_time = time.time() - start_time
   formatted_time = '{:02d}:{:02d}:{:02d}'.format(int(elapsed_time // 3600), int(elapsed_time % 3600 // 60), int(elapsed_time % 60))
   print(f"[#] Processed {processed_books} books in {formatted_time}")
@@ -59,7 +60,7 @@ if __name__ == '__main__':
       # if the --no-scrape argument is passed, just process the existing json dump files
       for file in glob.glob(os.path.join("dump", "*.json")):
         process_book_json(file, processed_books)
-      finish(driver, start_time, processed_books)
+      finish(None, start_time, processed_books)
     else:
       match_language = args.language if args.match_language else ""
       # if no login cookies were found, don't start a headless browser
@@ -77,7 +78,7 @@ if __name__ == '__main__':
           for category in categories:
             books_urls = scraper.get_all_books_for_categories(driver, category)
             for book_url in books_urls: 
-              dump_exists = scrape_book(driver, processed_books, args.book, category=category, match_language=match_language)            
+              dump_exists = scrape_book(driver, processed_books, book_url, category=category, match_language=match_language)            
               # if we processed the book from an existing dump 
               # no scraping was involved, no need to cooldown
               if not dump_exists:

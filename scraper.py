@@ -61,6 +61,8 @@ def initialize_driver(headless=True):
   driver = webdriver.Chrome(
     executable_path=os.path.join(path, "bin", "chromedriver.exe"), 
     service_log_path=os.path.join(path, "webdrive.log"),
+    # Don't verify self-signed cert, should help with 502 errors (https://github.com/wkeeling/selenium-wire/issues/55)
+    # seleniumwire_options={'verify_ssl': False},   
     options=chrome_options)
   return driver;
 
