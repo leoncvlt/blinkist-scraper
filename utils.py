@@ -15,13 +15,17 @@ def get_book_dump_filename(book_json_or_url):
     return os.path.join('dump', book_json_or_url['slug'] + '.json')
 
 def get_book_pretty_filepath(book_json):
-  return os.path.join('books', book_json['category'], get_book_pretty_filename(book_json))
+  path = os.path.join('books', book_json['category'], get_book_pretty_filename(book_json))
+  if (len(path) >= 260):
+    return "\\\\?\\" + path.replace("/","\\")
+  else:
+    return path
 
 def get_book_pretty_filename(book_json, extension=""):
   return f"{book_json['author']} - {book_json['title']}" + extension
 
-def get_book_short_pretty_filename(book_json, extension=""):
-  return f"{book_json['title']}" + extension
+# def get_book_short_pretty_filename(book_json, extension=""):
+#   return f"{book_json['title']}" + extension
 
 def is_installed(tool):
   return which(tool)
