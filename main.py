@@ -19,6 +19,8 @@ parser.add_argument('--headless', action='store_true', default=False, help='Star
 parser.add_argument('--audio', action='store_true', default=True, help='Download the audio blinks for each book')
 parser.add_argument('--concat-audio', action='store_true', default=False, help='Concatenate the audio blinks into a single file and tag it. Requires ffmpeg')
 parser.add_argument('--no-scrape', action='store_true', default=False, help='Don\'t scrape the website, only process existing json files in the dump folder')
+parser.add_argument('--book', default=False, help='Scrapes this book only, takes the blinkist url for the book (e.g. https://www.blinkist.com/en/books/... or nhttps://www.blinkist.com/en/nc/reader/...)')
+parser.add_argument('--category', default="Uncategorized", help='When scraping a single book, categorize it under this category (works with \'--book\' only')
 parser.add_argument('--create-html', action='store_true', default=True, help='Generate a formatted html document for the book')
 parser.add_argument('--create-epub', action='store_true', default=True, help='Generate a formatted epub document for the book')
 parser.add_argument('--create-pdf', action='store_true', default=False, help='Generate a formatted pdf document for the book. Requires wkhtmltopdf')
@@ -33,7 +35,18 @@ def process_book_json(book_json, processed_books = 0):
     generator.generate_book_pdf(book_json)
   return processed_books + 1
 
-def finish(start_time, processed_books):
+def scrape_book(driver, processed_books, book_url, category, match_language):
+  book_json, dump_exists = scraper.scrape_book(driver, book_url, category=category, match_language=match_language)
+  if (book_json):
+    if (args.audio):
+      audio_files = scraper.scrape_book_audio(driver, book_json, args.language)
+      if (audio_files and args.concat_audio):
+        generator.combine_audio(book_json, audio_files)
+    processed_books = process_book_json(book_json, processed_books)
+  return dump_exists
+
+def finish(driver, start_time, processed_books):
+  driver.close()
   elapsed_time = time.time() - start_time
   formatted_time = '{:02d}:{:02d}:{:02d}'.format(int(elapsed_time // 3600), int(elapsed_time % 3600 // 60), int(elapsed_time % 60))
   print(f"[#] Processed {processed_books} books in {formatted_time}")
@@ -46,7 +59,9 @@ if __name__ == '__main__':
       # if the --no-scrape argument is passed, just process the existing json dump files
       for file in glob.glob(os.path.join("dump", "*.json")):
         process_book_json(file, processed_books)
+      finish(driver, start_time, processed_books)
     else:
+      match_language = args.language if args.match_language else ""
       # if no login cookies were found, don't start a headless browser
       # so that the user can solve recaptcha and log in
       start_headless = args.headless
@@ -55,25 +70,22 @@ if __name__ == '__main__':
       driver = scraper.initialize_driver(headless=start_headless)
       is_logged_in = scraper.login(driver, args.language, args.email, args.password)
       if (is_logged_in):
-        categories = scraper.get_categories(driver, args.language)
-        for category in categories:
-          books_urls = scraper.get_all_books_for_categories(driver, category)
-          for book_url in books_urls:
-            match_language = args.language if args.match_language else ""
-            book_json, dump_exists = scraper.scrape_book(driver, book_url, category=category, match_language=match_language)
-            if (book_json):
-              if (args.audio):
-                audio_files = scraper.scrape_book_audio(driver, book_json, args.language)
-                if (audio_files and args.concat_audio):
-                  generator.combine_audio(book_json, audio_files)
-              processed_books = process_book_json(book_json, processed_books)
+        if (args.book):
+          scrape_book(driver, processed_books, args.book, category={ "label" : args.category}, match_language=match_language)
+        else:
+          categories = scraper.get_categories(driver, args.language)
+          for category in categories:
+            books_urls = scraper.get_all_books_for_categories(driver, category)
+            for book_url in books_urls: 
+              dump_exists = scrape_book(driver, processed_books, args.book, category=category, match_language=match_language)            
               # if we processed the book from an existing dump 
               # no scraping was involved, no need to cooldown
               if not dump_exists:
                 time.sleep(args.cooldown)
+        finish(driver, start_time, processed_books)
   except KeyboardInterrupt:
     print('[#] Interrupted by user')
-    finish(start_time, processed_books)
+    finish(driver, start_time, processed_books)
     try:
       sys.exit(0)
     except SystemExit:

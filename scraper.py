@@ -128,19 +128,20 @@ def get_all_books_for_categories(driver, category):
   print(f"[.] Found {len(books_links)} books")
   return books_links;
 
-def scrape_book(driver, book_url, match_language="", category="Uncategorized", force=False):
+def scrape_book(driver, book_url, match_language="", category={ "label" : "Uncategorized"}, force=False):
   # check if this book has already been dumped, unless we are forcing scraping
   # if so return the content of the dump, alonside with a flash saying it already existed
   if (os.path.exists(get_book_dump_filename(book_url)) and not force):
     print(f"[.] Json dump for book {book_url} already exixts, skipping scraping...")
     with open(get_book_dump_filename(book_url)) as f:
       return json.load(f), True
-    
+
   # if not, proceed scraping the reader page
   print(f"[.] Scraping book at {book_url}")
-  book_reader_url = book_url.replace("/books/", "/nc/reader/");
-  if not driver.current_url == book_reader_url:
-    driver.get(book_reader_url)
+  if not "/nc/reader/" in book_url:
+   book_url = book_url.replace("/books/", "/nc/reader/");
+  if not driver.current_url == book_url:
+    driver.get(book_url)
   reader = driver.find_element_by_class_name("reader__container");
 
   # get the book's metadata from the blinkist API using its ID
@@ -224,8 +225,8 @@ def scrape_book_audio(driver, book_json, language):
   for chapter_json in book_json['chapters']:
     time.sleep(1.0)
     api_url = f"https://www.blinkist.com/api/books/{book_json['id']}/chapters/{chapter_json['id']}/audio";
-    audio_request = requests.get(api_url, headers=audio_request_headers)
     try:
+      audio_request = requests.get(api_url, headers=audio_request_headers)
       audio_request_json = audio_request.json();
       if 'url' in audio_request_json:
         audio_url = audio_request_json['url']
@@ -240,10 +241,15 @@ def scrape_book_audio(driver, book_json, language):
       print('[!] Could not find audio url in request, aborting audio scrape...')
       error = True
       break
+    except:
+      print(f'[!] Request timed out or other unexpected error')
+      error = True
+      break
   
   if not error:
     return audio_files
   else:
+    print('[!] Error processing audio url, aborting audio scrape...')
     return []
 
 def download_book_chapter_audio(book_json, chapter_no, audio_url):
