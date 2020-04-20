@@ -114,7 +114,7 @@ def get_categories(driver, language, only_categories=None, ignored_categories=[]
     label = link.find_element_by_tag_name('span').get_attribute('innerHTML')
     # Do not add this category if the label contains any strings from ignored_categories
     if only_categories:
-      if not list(filter(lambda ic: ic.lower() in label.lower(), only_categories)):
+      if not list(filter(lambda oc: oc.lower() in label.lower(), only_categories)):
         continue
     if list(filter(lambda ic: ic.lower() in label.lower(), ignored_categories)):
       continue

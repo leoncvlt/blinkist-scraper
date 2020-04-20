@@ -20,7 +20,7 @@ parser.add_argument('--audio', action='store_true', default=True, help='Download
 parser.add_argument('--concat-audio', action='store_true', default=False, help='Concatenate the audio blinks into a single file and tag it. Requires ffmpeg')
 parser.add_argument('--no-scrape', action='store_true', default=False, help='Don\'t scrape the website, only process existing json files in the dump folder')
 parser.add_argument('--book', default=False, help='Scrapes this book only, takes the blinkist url for the book (e.g. https://www.blinkist.com/en/books/... or nhttps://www.blinkist.com/en/nc/reader/...)')
-parser.add_argument('--book-category', default="Uncategorized", help='When scraping a single book, categorize it under this category (works with \'--book\' only')
+parser.add_argument('--book-category', default="Uncategorized", help='When scraping a single book, categorize it under this category (works with \'--book\' only)')
 parser.add_argument('--categories', type=str, nargs='+', default='', help=('Only the categories whose label contains at least one string here will be scraped. '
                                                                            'Case-insensitive; use spaces to separate categories. '
                                                                            '(e.g. "--categories entrep market" will only scrape books under "Entrepreneurship" and "Marketing & Sales")'))
