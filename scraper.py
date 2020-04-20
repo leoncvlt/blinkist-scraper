@@ -123,6 +123,7 @@ def get_categories(driver, language, only_categories=None, ignored_categories=[]
       'url': href
     }
     categories_links.append(category);
+  print(f"[.] Scraping for categories: {[ c['label'] for c in categories_links ]}")
   return categories_links;
 
 def get_all_books_for_categories(driver, category):
