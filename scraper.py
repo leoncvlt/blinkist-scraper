@@ -102,7 +102,7 @@ def login(driver, language, email, password):
   store_login_cookies(driver)
   return True;
 
-def get_categories(driver, language, ignored_categories=[]):
+def get_categories(driver, language, only_categories=None, ignored_categories=[]):
   url_with_categories = f'https://www.blinkist.com/{language}/nc/login'
   driver.get(url_with_categories)
   categories_links = []
@@ -113,6 +113,9 @@ def get_categories(driver, language, ignored_categories=[]):
     href = link.get_attribute('href')
     label = link.find_element_by_tag_name('span').get_attribute('innerHTML')
     # Do not add this category if the label contains any strings from ignored_categories
+    if only_categories:
+      if not list(filter(lambda ic: ic.lower() in label.lower(), only_categories)):
+        continue
     if list(filter(lambda ic: ic.lower() in label.lower(), ignored_categories)):
       continue
     category = {
