@@ -21,6 +21,9 @@ parser.add_argument('--concat-audio', action='store_true', default=False, help='
 parser.add_argument('--no-scrape', action='store_true', default=False, help='Don\'t scrape the website, only process existing json files in the dump folder')
 parser.add_argument('--book', default=False, help='Scrapes this book only, takes the blinkist url for the book (e.g. https://www.blinkist.com/en/books/... or nhttps://www.blinkist.com/en/nc/reader/...)')
 parser.add_argument('--category', default="Uncategorized", help='When scraping a single book, categorize it under this category (works with \'--book\' only')
+parser.add_argument('--ignore-categories', type=str, nargs='+', default='', help=('If a category label contains anything in ignored_categories, it will be ignored for scraping. '
+                                                                                  'Case-insensitive; use spaces to separate categories. '
+                                                                                  '(e.g. "--ignored-categories entrep market" will skip scraping of "Entrepreneurship" and "Marketing & Sales")'))
 parser.add_argument('--create-html', action='store_true', default=True, help='Generate a formatted html document for the book')
 parser.add_argument('--create-epub', action='store_true', default=True, help='Generate a formatted epub document for the book')
 parser.add_argument('--create-pdf', action='store_true', default=False, help='Generate a formatted pdf document for the book. Requires wkhtmltopdf')
@@ -74,7 +77,7 @@ if __name__ == '__main__':
         if (args.book):
           scrape_book(driver, processed_books, args.book, category={ "label" : args.category}, match_language=match_language)
         else:
-          categories = scraper.get_categories(driver, args.language)
+          categories = scraper.get_categories(driver, args.language, args.ignore_categories)
           for category in categories:
             books_urls = scraper.get_all_books_for_categories(driver, category)
             for book_url in books_urls: 
