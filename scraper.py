@@ -112,7 +112,7 @@ def login(driver, language, email, password):
   store_login_cookies(driver)
   return True;
 
-def get_categories(driver, language):
+def get_categories(driver, language, specified_categories=None, ignored_categories=[]):
   url_with_categories = f'https://www.blinkist.com/{language}/nc/login'
   driver.get(url_with_categories)
   categories_links = []
@@ -122,11 +122,22 @@ def get_categories(driver, language):
     link = item.find_element_by_tag_name('a')
     href = link.get_attribute('href')
     label = link.find_element_by_tag_name('span').get_attribute('innerHTML')
+
+    # Do not add this category if specific_categories is specified AND
+    # the label doesn't contain anything specified there
+    if specified_categories:
+      if not list(filter(lambda oc: oc.lower() in label.lower(), specified_categories)):
+        continue
+    # Do not add this category if the label contains any strings from ignored_categories
+    if list(filter(lambda ic: ic.lower() in label.lower(), ignored_categories)):
+      continue
+
     category = {
       'label': ' '.join(label.split()).replace('&amp;', '&'),
       'url': href
     }
     categories_links.append(category);
+  print(f"[.] Scraping for categories: {[ c['label'] for c in categories_links ]}")
   return categories_links;
 
 def get_all_books_for_categories(driver, category):
@@ -144,7 +155,7 @@ def scrape_book(driver, book_url, match_language="", category={ "label" : "Uncat
   # check if this book has already been dumped, unless we are forcing scraping
   # if so return the content of the dump, alonside with a flash saying it already existed
   if (os.path.exists(get_book_dump_filename(book_url)) and not force):
-    print(f"[.] Json dump for book {book_url} already exixts, skipping scraping...")
+    print(f"[.] Json dump for book {book_url} already exists, skipping scraping...")
     with open(get_book_dump_filename(book_url)) as f:
       return json.load(f), True
 
@@ -205,7 +216,7 @@ def scrape_book_audio(driver, book_json, language):
   concat_audio = os.path.join(get_book_pretty_filepath(book_json), get_book_pretty_filename(book_json, ".m4a"))
   # short_concat_audio = os.path.join(get_book_pretty_filepath(book_json), get_book_short_pretty_filename(book_json, ".m4a"))
   if (os.path.exists(concat_audio)): # or os.path.exists(short_concat_audio)):
-    print(f"[.] Audio file for {book_json['slug']} already exixts, skipping scraping audio...")
+    print(f"[.] Audio file for {book_json['slug']} already exists, skipping scraping audio...")
     return False
 
   # check if the book actually has audio blinks
