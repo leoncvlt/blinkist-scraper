@@ -134,7 +134,7 @@ def scrape_book(driver, book_url, match_language="", category={ "label" : "Uncat
   # check if this book has already been dumped, unless we are forcing scraping
   # if so return the content of the dump, alonside with a flash saying it already existed
   if (os.path.exists(get_book_dump_filename(book_url)) and not force):
-    print(f"[.] Json dump for book {book_url} already exixts, skipping scraping...")
+    print(f"[.] Json dump for book {book_url} already exists, skipping scraping...")
     with open(get_book_dump_filename(book_url)) as f:
       return json.load(f), True
 
@@ -195,7 +195,7 @@ def scrape_book_audio(driver, book_json, language):
   concat_audio = os.path.join(get_book_pretty_filepath(book_json), get_book_pretty_filename(book_json, ".m4a"))
   # short_concat_audio = os.path.join(get_book_pretty_filepath(book_json), get_book_short_pretty_filename(book_json, ".m4a"))
   if (os.path.exists(concat_audio)): # or os.path.exists(short_concat_audio)):
-    print(f"[.] Audio file for {book_json['slug']} already exixts, skipping scraping audio...")
+    print(f"[.] Audio file for {book_json['slug']} already exists, skipping scraping audio...")
     return False
 
   # check if the book actually has audio blinks
