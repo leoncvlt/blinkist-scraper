@@ -156,8 +156,8 @@ def scrape_book(driver, book_url, match_language="", category={ "label" : "Uncat
     return None, False
 
   # sanitize the book's title and author since they will be used for paths and such
-  book['title'] = re.sub(r'[\\/*?:"<>|.]', "", book['title']).strip()
-  book['author'] = re.sub(r'[\\/*?:"<>|.]', "", book['author']).strip()
+  book['title'] = sanitize_name(book['title'])
+  book['author'] = sanitize_name(book['author'])
 
   # scrape the chapter's content on the reader page
   # and extend the book json data by inserting the scraped content

@@ -1,5 +1,6 @@
 import os, json
 from shutil import which
+import re
 
 def get_or_read_json(book_json_or_file):
   if (type(book_json_or_file) is dict):
@@ -7,6 +8,11 @@ def get_or_read_json(book_json_or_file):
   else:
     with open(book_json_or_file) as f:
       return json.load(f)
+
+def sanitize_name(name):
+  # from scraper.py line:162
+  # book['title'] = re.sub(r'[\\/*?:"<>|.]', "", book['title']).strip()
+  return re.sub(r'[\\/*?:"<>|.]', "", name).strip()
 
 def get_book_dump_filename(book_json_or_url):
   if ("blinkist.com" in book_json_or_url):
@@ -22,10 +28,13 @@ def get_book_pretty_filepath(book_json):
     return path
 
 def get_book_pretty_filename(book_json, extension=""):
-  return f"{book_json['author']} - {book_json['title']}" + extension
+  author = sanitize_name(book_json['author'])
+  title = sanitize_name(book_json['title'])
+  return f"{author} - {title}" + extension
 
 # def get_book_short_pretty_filename(book_json, extension=""):
-#   return f"{book_json['title']}" + extension
+#   title = sanitize_name(book_json['title'])
+#   return f"{title}" + extension
 
 def is_installed(tool):
   return which(tool)
