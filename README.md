@@ -41,6 +41,10 @@ optional arguments:
   --book BOOK          Scrapes this book only, takes the blinkist url for the
                        book (e.g. https://www.blinkist.com/en/books/... or
                        nhttps://www.blinkist.com/en/nc/reader/...)
+  --books TEXT_FILE    Scrapes the list of books only, takes a txt file with the 
+                       list of blinkist urls for the books
+                       (e.g. https://www.blinkist.com/en/books/... 
+                       or nhttps://www.blinkist.com/en/nc/reader/...)
   --book-category BOOK_CATEGORY
                         When scraping a single book, categorize it under this
                         category (works with '--book' only)
