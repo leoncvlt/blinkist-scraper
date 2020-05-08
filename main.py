@@ -68,7 +68,32 @@ if __name__ == '__main__':
       start_headless = args.headless
       if not scraper.has_login_cookies():
         start_headless = False
-      driver = scraper.initialize_driver(headless=start_headless)
+      # add uBlock (if the conditions are right)
+      if not (args.book or args.headless): # causes problems, I think
+        use_ublock = True
+      else:
+        use_ublock = False
+      driver = scraper.initialize_driver(headless=start_headless, uBlock=use_ublock)
+
+      if (use_ublock):
+        print('[..] Configuring uBlock')
+
+        # set up uBlock
+        driver.get('chrome-extension://ilchdfhfciidacichehpmmjclkbfaecg/settings.html')
+
+        # Un-hide the file upload button so we can use it
+        element = driver.find_elements_by_class_name("hidden")
+        driver.execute_script("document.getElementsByClassName('hidden')[0].className = ''", element)
+        driver.execute_script("window.scrollTo(0, 2000)") # scroll down (for debugging)
+        uBlock_settings_file = str(os.path.join(os.getcwd(), "my-ublock-backup_2020-04-20_17.13.57.txt"))
+        driver.find_element_by_id("restoreFilePicker").send_keys(uBlock_settings_file) #upload
+        driver.switch_to.alert.accept() # click ok on pop up to accept overwrite
+        print('[..] uBlock configured')
+
+        # leave uBlock config
+        driver.get("about:blank")
+
+      print('[...] Starting Scraper, logging in. Loading homepage.')
       is_logged_in = scraper.login(driver, args.language, args.email, args.password)
       if (is_logged_in):
         if (args.book):

@@ -46,7 +46,7 @@ def load_login_cookies(driver):
 def store_login_cookies(driver):
   pickle.dump( driver.get_cookies() , open("cookies.pkl","wb"))
 
-def initialize_driver(headless=True):
+def initialize_driver(headless=True, uBlock=False):
   print("[.] Initialising chromedriver...")
   chrome_options = Options()  
   if (headless):
@@ -58,6 +58,8 @@ def initialize_driver(headless=True):
   # this allows selenium to accept cookies with a non-int64 'expiry' value
   chrome_options.add_experimental_option("w3c", False)
   
+  if (uBlock): # add uBlock (to avoid un-needed recources)
+    chrome_options.add_extension("cjpalhdlnbpafiamejdnhcphjbkeiagm.crx")
   driver = webdriver.Chrome(
     executable_path=os.path.join(path, "bin", "chromedriver.exe"), 
     service_log_path=os.path.join(path, "webdrive.log"),
