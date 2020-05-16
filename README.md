@@ -13,7 +13,7 @@ This script uses [ChromeDriver](chromedriver.chromium.org) to automate the Googl
 ```text
 usage: main.py [-h] [--language {de,en}] [--match-language]
                [--cooldown COOLDOWN] [--headless] [--audio] [--concat-audio]
-               [--no-scrape] [--book BOOK] [--category CATEGORY]
+               [--no-scrape] [--book BOOK] [--books BOOKS] [--category CATEGORY]
                [--create-html] [--create-epub] [--create-pdf]
                email password                                              
                                                                               
@@ -41,10 +41,10 @@ optional arguments:
   --book BOOK          Scrapes this book only, takes the blinkist url for the
                        book (e.g. https://www.blinkist.com/en/books/... or
                        nhttps://www.blinkist.com/en/nc/reader/...)
-  --books TEXT_FILE    Scrapes the list of books only, takes a txt file with the 
+  --books TEXT_FILE    Scrapes the list of books, takes a txt file with the 
                        list of blinkist urls for the books
                        (e.g. https://www.blinkist.com/en/books/... 
-                       or nhttps://www.blinkist.com/en/nc/reader/...)
+                       or https://www.blinkist.com/en/nc/reader/...)
   --book-category BOOK_CATEGORY
                         When scraping a single book, categorize it under this
                         category (works with '--book' only)
