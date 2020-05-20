@@ -23,7 +23,14 @@ parser.add_argument('--concat-audio', action='store_true', default=False, help='
 parser.add_argument('--keep-noncat', action='store_true', default=False, help='Keep the individual blink audio files, instead of deleting them (works with \'--concat-audio\' only')
 parser.add_argument('--no-scrape', action='store_true', default=False, help='Don\'t scrape the website, only process existing json files in the dump folder')
 parser.add_argument('--book', default=False, help='Scrapes this book only, takes the blinkist url for the book (e.g. https://www.blinkist.com/en/books/... or nhttps://www.blinkist.com/en/nc/reader/...)')
-parser.add_argument('--category', default="Uncategorized", help='When scraping a single book, categorize it under this category (works with \'--book\' only')
+parser.add_argument('--books', default=False, help='Scrapes the list of books, takes a txt file with the list of blinkist urls for the books (e.g. https://www.blinkist.com/en/books/... or https://www.blinkist.com/en/nc/reader/...)')
+parser.add_argument('--book-category', default="Uncategorized", help='When scraping a single book, categorize it under this category (works with \'--book\' only)')
+parser.add_argument('--categories', type=str, nargs='+', default='', help=('Only the categories whose label contains at least one string here will be scraped. '
+                                                                           'Case-insensitive; use spaces to separate categories. '
+                                                                           '(e.g. "--categories entrep market" will only scrape books under "Entrepreneurship" and "Marketing & Sales")'))
+parser.add_argument('--ignore-categories', type=str, nargs='+', default='', help=('If a category label contains anything in ignored_categories, books under that category will not be scraped. '
+                                                                                  'Case-insensitive; use spaces to separate categories. '
+                                                                                  '(e.g. "--ignored-categories entrep market" will skip scraping of "Entrepreneurship" and "Marketing & Sales")'))
 parser.add_argument('--create-html', action='store_true', default=True, help='Generate a formatted html document for the book')
 parser.add_argument('--create-epub', action='store_true', default=True, help='Generate a formatted epub document for the book')
 parser.add_argument('--create-pdf', action='store_true', default=False, help='Generate a formatted pdf document for the book. Requires wkhtmltopdf')
@@ -133,9 +140,15 @@ if __name__ == '__main__':
       is_logged_in = scraper.login(driver, args.language, args.email, args.password)
       if (is_logged_in):
         if (args.book):
-          scrape_book(driver, processed_books, args.book, category={ "label" : args.category}, match_language=match_language)
+          scrape_book(driver, processed_books, args.book, category={ "label" : args.book_category}, match_language=match_language)
+        elif (args.books):
+          with open(args.books, 'r') as books_urls:
+            for book_url in books_urls.readlines():
+              dump_exists = scrape_book(driver, processed_books, book_url.split('\n')[0], category={ "label" : args.book_category}, match_language=match_language)
+              if not dump_exists:           
+                time.sleep(args.cooldown)
         else:
-          categories = scraper.get_categories(driver, args.language)
+          categories = scraper.get_categories(driver, args.language, args.categories, args.ignore_categories)
           for category in categories:
             books_urls = scraper.get_all_books_for_categories(driver, category)
             for book_url in books_urls:

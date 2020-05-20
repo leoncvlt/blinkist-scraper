@@ -1,4 +1,4 @@
-import os, time, requests, subprocess, argparse, json, pickle, html, argparse, time, re
+import os, time, requests, subprocess, argparse, json, pickle, html, argparse, time, re, sys, platform
 from datetime import datetime
 from seleniumwire import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -60,8 +60,19 @@ def initialize_driver(headless=True, uBlock=False):
 
   if (uBlock): # add uBlock (to avoid un-needed recources)
     chrome_options.add_extension("cjpalhdlnbpafiamejdnhcphjbkeiagm.crx")
+
+  # check OS to pick the correct driver
+  current_system = platform.system()
+  if (current_system == 'Windows'):
+    driver_path = os.path.join(path, "bin", "chromedriver.exe")
+  elif (current_system == 'Darwin'):
+    driver_path = os.path.join(path, "bin", "chromedriver")
+  else:
+    print('[!] Unsupported OS.')
+    sys.exit()
+
   driver = webdriver.Chrome(
-    executable_path=os.path.join(path, "bin", "chromedriver.exe"),
+    executable_path=driver_path,
     service_log_path=os.path.join(path, "webdrive.log"),
     # Don't verify self-signed cert, should help with 502 errors (https://github.com/wkeeling/selenium-wire/issues/55)
     # seleniumwire_options={'verify_ssl': False},
@@ -104,7 +115,7 @@ def login(driver, language, email, password):
   store_login_cookies(driver)
   return True;
 
-def get_categories(driver, language):
+def get_categories(driver, language, specified_categories=None, ignored_categories=[]):
   url_with_categories = f'https://www.blinkist.com/{language}/nc/login'
   driver.get(url_with_categories)
   categories_links = []
@@ -114,11 +125,22 @@ def get_categories(driver, language):
     link = item.find_element_by_tag_name('a')
     href = link.get_attribute('href')
     label = link.find_element_by_tag_name('span').get_attribute('innerHTML')
+
+    # Do not add this category if specific_categories is specified AND
+    # the label doesn't contain anything specified there
+    if specified_categories:
+      if not list(filter(lambda oc: oc.lower() in label.lower(), specified_categories)):
+        continue
+    # Do not add this category if the label contains any strings from ignored_categories
+    if list(filter(lambda ic: ic.lower() in label.lower(), ignored_categories)):
+      continue
+
     category = {
       'label': ' '.join(label.split()).replace('&amp;', '&'),
       'url': href
     }
     categories_links.append(category);
+  print(f"[.] Scraping for categories: {[ c['label'] for c in categories_links ]}")
   return categories_links;
 
 def get_all_books_for_categories(driver, category):

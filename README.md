@@ -13,7 +13,7 @@ This script uses [ChromeDriver](chromedriver.chromium.org) to automate the Googl
 ```text
 usage: main.py [-h] [--language {de,en}] [--match-language]
                [--cooldown COOLDOWN] [--headless] [--audio] [--concat-audio]
-               [--no-scrape] [--book BOOK] [--category CATEGORY]
+               [--no-scrape] [--book BOOK] [--books BOOKS] [--category CATEGORY]
                [--create-html] [--create-epub] [--create-pdf]
                email password
 
@@ -43,9 +43,28 @@ optional arguments:
                        files in the dump folder (default false)
   --book BOOK          Scrapes this book only, takes the blinkist url for the
                        book (e.g. https://www.blinkist.com/en/books/... or
-                       nhttps://www.blinkist.com/en/nc/reader/...)
-  --category CATEGORY  When scraping a single book, categorize it under this
+                       https://www.blinkist.com/en/nc/reader/...)
+
+  --books TEXT_FILE    Scrapes the list of books, takes a txt file with the
+                       list of blinkist urls for the books
+                       (e.g. https://www.blinkist.com/en/books/...
+                       or https://www.blinkist.com/en/nc/reader/...)
+  --book-category BOOK_CATEGORY
+                       When scraping a single book, categorize it under this
                        category (works with '--book' only)
+  --categories CATEGORIES [CATEGORIES ...]
+                       Only the categories whose label contains at least one
+                       string here will be scraped. Case-insensitive; use
+                       spaces to separate categories. (e.g. "--categories
+                       entrep market" will only scrape books under
+                       "Entrepreneurship" and "Marketing & Sales")
+  --ignore-categories IGNORE_CATEGORIES [IGNORE_CATEGORIES ...]
+                       If a category label contains anything in
+                       ignored_categories, books under that category will not
+                       be scraped. Case-insensitive; use spaces to separate
+                       categories. (e.g. "--ignored-categories entrep market"
+                       will skip scraping of "Entrepreneurship" and
+                       "Marketing & Sales")
   --create-html        Generate a formatted html document for the book (default true)
   --create-epub        Generate a formatted epub document for the book (default true)
   --create-pdf         Generate a formatted pdf document for the book.
