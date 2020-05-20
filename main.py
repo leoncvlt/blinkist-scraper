@@ -47,30 +47,34 @@ def scrape_book(driver, processed_books, book_url, category, match_language):
       filepath = get_book_pretty_filepath(book_json) # dl location
       concat_audio_filename = get_book_pretty_filename(book_json, ".m4a")
       concat_audio_exists = os.path.exists(os.path.join(filepath, concat_audio_filename))
-      audio_files_in_folder = glob.glob1(filepath,"*.m4a") # switch to regex or loop
-      audio_files_count = len(audio_files_in_folder)
-      json_chapter_count = book_json['number_of_chapters']
-      chapter_audio_is_complete = (audio_files_count == json_chapter_count)
-      if (audio_files_in_folder and (not concat_audio_exists)):
-        print(f"[.] Found {audio_files_count} out of {json_chapter_count}")
+      audio_files = []
+      audio_files_count = 0
+      chapters = book_json["chapters"]
+      chapter_count = len(chapters)
+
+      for chapter in enumerate(chapters):
+        index = chapter[0]
+        chapter_data = chapter[1]
+        chapter_audio_filename = str(chapter_data["order_no"]) + ".m4a"
+        chapter_audio_path = os.path.join(filepath, chapter_audio_filename)
+        chapter_audio_exists = os.path.exists(chapter_audio_path)
+        if (chapter_audio_exists):
+          audio_files_count +=1
+          # add chapter_audio_path to audio_files
+          audio_files.append(chapter_audio_path)
+      chapter_audio_is_complete = (audio_files_count == chapter_count)
       if not (concat_audio_exists): # or if re-downloading individual tracks
-        # check if we need more audio
-        if (chapter_audio_is_complete): # or if concat_audio_exists
-            # All of the audio has already been downloaded
-            audio_files = audio_files_in_folder
-            # add full path to each item in 'audio_files'
-            for index in range(len(audio_files)):
-              file_name = audio_files[index]
-              full_path = os.path.join(filepath, file_name)
-              audio_files[index] = full_path
-            print("[.] Audio is already downloaded. Skipping.")
-        else:
-            audio_files = scraper.scrape_book_audio(driver, book_json, args.language)
+        if (chapter_audio_is_complete): # no audio is needed
+          print(f"[.] Audio for all {chapter_count} blinks already exists, skipping download...")
+        else: # we don't have all the audio
+          if (audio_files_count): # there is audio already
+            print(f"[.] Found audio for {audio_files_count} out of {chapter_count} blinks.")
+          audio_files = scraper.scrape_book_audio(driver, book_json, args.language)
 
         if (audio_files and args.concat_audio):
             generator.combine_audio(book_json, audio_files, args.keep_noncat)
       else:
-        print("[.] Concated audio already exists. Skipping download.")
+        print("[.] Concated audio already exists. Skipping downloads, not concatenating...")
     processed_books = process_book_json(book_json, processed_books)
   return dump_exists
 

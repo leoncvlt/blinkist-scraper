@@ -118,7 +118,11 @@ def combine_audio(book_json, files, keep_blinks=False):
     print(f"[!] ffmpeg needs to be installed and added to PATH to combine audio files")
     return
 
-  print(f"[.] Combining audio files for {book_json['slug']}")
+  if keep_blinks:
+    action_text = "keeping originals of"
+  else:
+    action_text = "deleting"
+  print(f"[.] Combining, and {action_text}, audio files for {book_json['slug']}")
   filepath = get_book_pretty_filepath(book_json)
   filename = get_book_pretty_filename(book_json, ".m4a")
 
