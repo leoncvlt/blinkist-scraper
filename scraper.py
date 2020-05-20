@@ -6,7 +6,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait 
+from selenium.webdriver.support.ui import WebDriverWait
+import chromedriver_binary
 
 from utils import *
 
@@ -57,19 +58,8 @@ def initialize_driver(headless=True):
   chrome_options.add_argument("--disable-logging")
   # this allows selenium to accept cookies with a non-int64 'expiry' value
   chrome_options.add_experimental_option("w3c", False)
-
-  # check OS to pick the correct driver
-  current_system = platform.system()
-  if (current_system == 'Windows'):
-    driver_path = os.path.join(path, "bin", "chromedriver.exe")
-  elif (current_system == 'Darwin'):
-    driver_path = os.path.join(path, "bin", "chromedriver")
-  else:
-    print('[!] Unsupported OS.')
-    sys.exit()
   
   driver = webdriver.Chrome(
-    executable_path=driver_path,
     service_log_path=os.path.join(path, "webdrive.log"),
     # Don't verify self-signed cert, should help with 502 errors (https://github.com/wkeeling/selenium-wire/issues/55)
     # seleniumwire_options={'verify_ssl': False},   
