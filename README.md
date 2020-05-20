@@ -36,6 +36,9 @@ optional arguments:
   --audio              Download the audio blinks for each book (default true)               
   --concat-audio       Concatenate the audio blinks into a single file and tag
                        it. Requires ffmpeg (default false)                                    
+  --keep-noncat        Keep the individual blink audio files, instead of deleting
+                       them, when concating the audio. Only relevant when using
+                       the the '--concat-audio' option (default false)
   --no-scrape          Don't scrape the website, only process existing json   
                        files in the dump folder (default false)
   --book BOOK          Scrapes this book only, takes the blinkist url for the
@@ -66,7 +69,7 @@ Add the `--create-pdf` argument to the script to generate a .pdf file from the .
 The script download audio blinks as well. This is done by waiting for a request to the Blinkist's `audio` endpoint in their `library` api for the first chapter's audio blink which is sent as soon as the user navigates to a book's reader page; then re-using the valid request's headers to build additional requests to the rest of the chapter's audio files. The files are downloaded as `.m4a`.
 
 ## Concatenating audio files
-Add the `--concat-audio` argument to the script to concatenate the individual audio blinks into a single file and tag it with the appropriate book title and author. This requires the [ffmpeg](https://www.ffmpeg.org/) tool to be installed and present in the PATH.
+Add the `--concat-audio` argument to the script to concatenate the individual audio blinks into a single file and tag it with the appropriate book title and author. Doing this will delete all individual blinks and replace them with one audio file (per book), only. To keep both the individual blink audio files, also, use the `--keep-noncat` argument together with the `--concat-audio` argument (i.e. `--concat-audio --keep-noncat`). This requires the [ffmpeg](https://www.ffmpeg.org/) tool to be installed and present in the PATH.
 
 ## Processing book dumps with no scraping
 During scraping, the script saves all book's metadata in json files inside the `dump` folder. Those can be used by the script to re-generate the .html, .epub and .pdf output files without having to scrape the website again. To do so, pass the `--no-scrape` argument to the script.

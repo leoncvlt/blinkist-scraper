@@ -1,5 +1,7 @@
 import argparse, sys, os, glob, time
 
+from utils import get_book_pretty_filepath, get_book_pretty_filename
+
 import scraper
 import generator
 
@@ -18,6 +20,7 @@ parser.add_argument('--cooldown', type=check_cooldown, default=1, help='Seconds 
 parser.add_argument('--headless', action='store_true', default=False, help='Start the automated web browser in headless mode. Works only if you already logged in once')
 parser.add_argument('--audio', action='store_true', default=True, help='Download the audio blinks for each book')
 parser.add_argument('--concat-audio', action='store_true', default=False, help='Concatenate the audio blinks into a single file and tag it. Requires ffmpeg')
+parser.add_argument('--keep-noncat', action='store_true', default=False, help='Keep the individual blink audio files, instead of deleting them (works with \'--concat-audio\' only')
 parser.add_argument('--no-scrape', action='store_true', default=False, help='Don\'t scrape the website, only process existing json files in the dump folder')
 parser.add_argument('--book', default=False, help='Scrapes this book only, takes the blinkist url for the book (e.g. https://www.blinkist.com/en/books/... or nhttps://www.blinkist.com/en/nc/reader/...)')
 parser.add_argument('--category', default="Uncategorized", help='When scraping a single book, categorize it under this category (works with \'--book\' only')
@@ -39,21 +42,50 @@ def scrape_book(driver, processed_books, book_url, category, match_language):
   book_json, dump_exists = scraper.scrape_book(driver, book_url, category=category, match_language=match_language)
   if (book_json):
     if (args.audio):
-      audio_files = scraper.scrape_book_audio(driver, book_json, args.language)
-      if (audio_files and args.concat_audio):
-        generator.combine_audio(book_json, audio_files)
+
+      # Check if we need to download audio (so that we don't have to revisit the webpage for each book, needlesly)
+      filepath = get_book_pretty_filepath(book_json) # dl location
+      concat_audio_filename = get_book_pretty_filename(book_json, ".m4a")
+      concat_audio_exists = os.path.exists(os.path.join(filepath, concat_audio_filename))
+      audio_files_in_folder = glob.glob1(filepath,"*.m4a") # switch to regex or loop
+      audio_files_count = len(audio_files_in_folder)
+      json_chapter_count = book_json['number_of_chapters']
+      chapter_audio_is_complete = (audio_files_count == json_chapter_count)
+      if (audio_files_in_folder and (not concat_audio_exists)):
+        print(f"[.] Found {audio_files_count} out of {json_chapter_count}")
+      if not (concat_audio_exists): # or if re-downloading individual tracks
+        # check if we need more audio
+        if (chapter_audio_is_complete): # or if concat_audio_exists
+            # All of the audio has already been downloaded
+            audio_files = audio_files_in_folder
+            # add full path to each item in 'audio_files'
+            for index in range(len(audio_files)):
+              file_name = audio_files[index]
+              full_path = os.path.join(filepath, file_name)
+              audio_files[index] = full_path
+            print("[.] Audio is already downloaded. Skipping.")
+        else:
+            audio_files = scraper.scrape_book_audio(driver, book_json, args.language)
+
+        if (audio_files and args.concat_audio):
+            generator.combine_audio(book_json, audio_files, args.keep_noncat)
+      else:
+        print("[.] Concated audio already exists. Skipping download.")
     processed_books = process_book_json(book_json, processed_books)
   return dump_exists
 
 def finish(driver, start_time, processed_books):
-  if (driver): 
+  if (driver):
     driver.close()
   elapsed_time = time.time() - start_time
   formatted_time = '{:02d}:{:02d}:{:02d}'.format(int(elapsed_time // 3600), int(elapsed_time % 3600 // 60), int(elapsed_time % 60))
   print(f"[#] Processed {processed_books} books in {formatted_time}")
 
+#  Add code to turn this into a callable function
+
 if __name__ == '__main__':
   processed_books = 0
+  print('[.] Init...')
   start_time = time.time()
   try:
     if (args.no_scrape):

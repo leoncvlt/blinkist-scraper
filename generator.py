@@ -113,7 +113,7 @@ def generate_book_pdf(book_json_or_file):
   os.system(pdf_command)
   return pdf_file
 
-def combine_audio(book_json, files):
+def combine_audio(book_json, files, keep_blinks=False):
   if not is_installed("ffmpeg"):
     print(f"[!] ffmpeg needs to be installed and added to PATH to combine audio files")
     return
@@ -150,6 +150,7 @@ def combine_audio(book_json, files):
     os.remove(files_list)
   if (os.path.exists(combined_audio_file)):
     os.remove(combined_audio_file)
-  for file in files:
-    if (os.path.exists(file)):
-      os.remove(os.path.abspath(file))
+  if not (keep_blinks):
+    for file in files:
+      if (os.path.exists(file)):
+        os.remove(os.path.abspath(file))
