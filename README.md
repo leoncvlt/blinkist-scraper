@@ -15,41 +15,41 @@ usage: main.py [-h] [--language {de,en}] [--match-language]
                [--cooldown COOLDOWN] [--headless] [--audio] [--concat-audio]
                [--no-scrape] [--book BOOK] [--category CATEGORY]
                [--create-html] [--create-epub] [--create-pdf]
-               email password                                              
-                                                                              
-Example with non-optional arguments                                           
-                                                                              
-positional arguments:                                                         
+               email password
+
+Example with non-optional arguments
+
+positional arguments:
   email                The email to log into your premium Blinkist account    
-  password             The password to log into your premium Blinkist account 
-                                                                              
-optional arguments:                                                           
+  password             The password to log into your premium Blinkist account
+
+optional arguments:
   -h, --help           show this help message and exit
   --language {en,de}   The language to scrape books in - either 'en' for
                        english or 'de' for german (default en)
   --match-language     Skip scraping books if not in the requested language
                        (not all book are avaible in german, default false)
   --cooldown COOLDOWN  Seconds to wait between scraping books, and downloading
-                       audio files. Can't be smaller than 1 (default 1)                  
+                       audio files. Can't be smaller than 1 (default 1)
   --headless           Start the automated web browser in headless mode. Works
-                       only if you already logged in once (default false)                       
-  --audio              Download the audio blinks for each book (default true)               
+                       only if you already logged in once (default false)
+  --audio              Download the audio blinks for each book (default true)
   --concat-audio       Concatenate the audio blinks into a single file and tag
-                       it. Requires ffmpeg (default false)                                    
+                       it. Requires ffmpeg (default false)
   --keep-noncat        Keep the individual blink audio files, instead of deleting
                        them, when concating the audio. Only relevant when using
                        the the '--concat-audio' option (default false)
-  --no-scrape          Don't scrape the website, only process existing json   
+  --no-scrape          Don't scrape the website, only process existing json
                        files in the dump folder (default false)
   --book BOOK          Scrapes this book only, takes the blinkist url for the
                        book (e.g. https://www.blinkist.com/en/books/... or
                        nhttps://www.blinkist.com/en/nc/reader/...)
   --category CATEGORY  When scraping a single book, categorize it under this
                        category (works with '--book' only)
-  --create-html        Generate a formatted html document for the book (default true)        
-  --create-epub        Generate a formatted epub document for the book (default true)       
+  --create-html        Generate a formatted html document for the book (default true)
+  --create-epub        Generate a formatted epub document for the book (default true)
   --create-pdf         Generate a formatted pdf document for the book.
-                       Requires wkhtmltopdf (default false)                                   
+                       Requires wkhtmltopdf (default false)
 ```
 
 ## Basic usage
@@ -58,9 +58,9 @@ optional arguments:
 The script uses Selenium with a Chrome driver to scrape the site. Blinkist uses captchas on login, so the script will wait for the user to solve it and login on first run (although the email and password fields are filled in automatically from the arguments)  - the sessions cookies are stored so the script can be run in headless mode with the appropriate flag afterwards. The output files are stored in the `books` folder, arranged in subfolders by category and by the book's title and author.
 
 ## Customizing HTML output
-The script builds a nice-looking html version of the book by using the 'book.html' and 'chapter.html' files in the 'templates' folder as a base. Every parameter between curly braces in those files (e.g. `{title}`) is replaced by the appropriate value from the book metadata (dumped in the `dump` folder upon scraping), following a 1-to-1 naming convention with the json parameters (.e.g `{title}` will be replaced by the `title` parameter, `{who_should_read}` but the `who_should_read` one and so on). 
+The script builds a nice-looking html version of the book by using the 'book.html' and 'chapter.html' files in the 'templates' folder as a base. Every parameter between curly braces in those files (e.g. `{title}`) is replaced by the appropriate value from the book metadata (dumped in the `dump` folder upon scraping), following a 1-to-1 naming convention with the json parameters (.e.g `{title}` will be replaced by the `title` parameter, `{who_should_read}` but the `who_should_read` one and so on).
 
-The special field `{__chapters__}` is replaced with all the book's chapters. Chapters are created by parsing each `chapter` object in the book metadata and using the `chapter.html` template file in the same fashion, replacing tokens with the parameters inside the `chapter` object. 
+The special field `{__chapters__}` is replaced with all the book's chapters. Chapters are created by parsing each `chapter` object in the book metadata and using the `chapter.html` template file in the same fashion, replacing tokens with the parameters inside the `chapter` object.
 
 ## Generating .pdf
 Add the `--create-pdf` argument to the script to generate a .pdf file from the .html one. This requires the [wkhtmltopdf](https://wkhtmltopdf.org/) tool to be installed and present in the PATH.

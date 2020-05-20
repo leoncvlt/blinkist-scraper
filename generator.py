@@ -35,7 +35,7 @@ def generate_book_html(book_json_or_file):
 
   book_html = book_html.replace('{__chapters__}', "\n".join(chapters_html))
   book_html = book_html.replace('<p>&nbsp;</p>', '')
-  
+
   # finally, export the finished book html
   if not os.path.exists(filepath):
     os.makedirs(filepath)

@@ -30,11 +30,11 @@ parser.add_argument('--create-pdf', action='store_true', default=False, help='Ge
 args = parser.parse_args()
 
 def process_book_json(book_json, processed_books = 0):
-  if (args.create_html): 
+  if (args.create_html):
     generator.generate_book_html(book_json)
-  if (args.create_epub): 
+  if (args.create_epub):
     generator.generate_book_epub(book_json)
-  if (args.create_pdf): 
+  if (args.create_pdf):
     generator.generate_book_pdf(book_json)
   return processed_books + 1
 
@@ -138,9 +138,9 @@ if __name__ == '__main__':
           categories = scraper.get_categories(driver, args.language)
           for category in categories:
             books_urls = scraper.get_all_books_for_categories(driver, category)
-            for book_url in books_urls: 
-              dump_exists = scrape_book(driver, processed_books, book_url, category=category, match_language=match_language)            
-              # if we processed the book from an existing dump 
+            for book_url in books_urls:
+              dump_exists = scrape_book(driver, processed_books, book_url, category=category, match_language=match_language)
+              # if we processed the book from an existing dump
               # no scraping was involved, no need to cooldown
               if not dump_exists:
                 time.sleep(args.cooldown)
@@ -152,7 +152,3 @@ if __name__ == '__main__':
       sys.exit(0)
     except SystemExit:
       os._exit(0)
-    
-
-
-
