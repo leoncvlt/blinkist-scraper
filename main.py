@@ -1,5 +1,7 @@
 import argparse, sys, os, glob, time
 
+from utils import get_book_pretty_filepath, get_book_pretty_filename
+
 import scraper
 import generator
 
@@ -18,6 +20,7 @@ parser.add_argument('--cooldown', type=check_cooldown, default=1, help='Seconds 
 parser.add_argument('--headless', action='store_true', default=False, help='Start the automated web browser in headless mode. Works only if you already logged in once')
 parser.add_argument('--audio', action='store_true', default=True, help='Download the audio blinks for each book')
 parser.add_argument('--concat-audio', action='store_true', default=False, help='Concatenate the audio blinks into a single file and tag it. Requires ffmpeg')
+parser.add_argument('--keep-noncat', action='store_true', default=False, help='Keep the individual blink audio files, instead of deleting them (works with \'--concat-audio\' only')
 parser.add_argument('--no-scrape', action='store_true', default=False, help='Don\'t scrape the website, only process existing json files in the dump folder')
 parser.add_argument('--book', default=False, help='Scrapes this book only, takes the blinkist url for the book (e.g. https://www.blinkist.com/en/books/... or nhttps://www.blinkist.com/en/nc/reader/...)')
 parser.add_argument('--books', default=False, help='Scrapes the list of books, takes a txt file with the list of blinkist urls for the books (e.g. https://www.blinkist.com/en/books/... or https://www.blinkist.com/en/nc/reader/...)')
@@ -34,11 +37,11 @@ parser.add_argument('--create-pdf', action='store_true', default=False, help='Ge
 args = parser.parse_args()
 
 def process_book_json(book_json, processed_books = 0):
-  if (args.create_html): 
+  if (args.create_html):
     generator.generate_book_html(book_json)
-  if (args.create_epub): 
+  if (args.create_epub):
     generator.generate_book_epub(book_json)
-  if (args.create_pdf): 
+  if (args.create_pdf):
     generator.generate_book_pdf(book_json)
   return processed_books + 1
 
@@ -46,21 +49,54 @@ def scrape_book(driver, processed_books, book_url, category, match_language):
   book_json, dump_exists = scraper.scrape_book(driver, book_url, category=category, match_language=match_language)
   if (book_json):
     if (args.audio):
-      audio_files = scraper.scrape_book_audio(driver, book_json, args.language)
-      if (audio_files and args.concat_audio):
-        generator.combine_audio(book_json, audio_files)
+
+      # Check if we need to download audio (so that we don't have to revisit the webpage for each book, needlesly)
+      filepath = get_book_pretty_filepath(book_json) # dl location
+      concat_audio_filename = get_book_pretty_filename(book_json, ".m4a")
+      concat_audio_exists = os.path.exists(os.path.join(filepath, concat_audio_filename))
+      audio_files = []
+      audio_files_count = 0
+      chapters = book_json["chapters"]
+      chapter_count = len(chapters)
+
+      for chapter in enumerate(chapters):
+        index = chapter[0]
+        chapter_data = chapter[1]
+        chapter_audio_filename = str(chapter_data["order_no"]) + ".m4a"
+        chapter_audio_path = os.path.join(filepath, chapter_audio_filename)
+        chapter_audio_exists = os.path.exists(chapter_audio_path)
+        if (chapter_audio_exists):
+          audio_files_count +=1
+          # add chapter_audio_path to audio_files
+          audio_files.append(chapter_audio_path)
+      chapter_audio_is_complete = (audio_files_count == chapter_count)
+      if not (concat_audio_exists): # or if re-downloading individual tracks
+        if (chapter_audio_is_complete): # no audio is needed
+          print(f"[.] Audio for all {chapter_count} blinks already exists, skipping download...")
+        else: # we don't have all the audio
+          if (audio_files_count): # there is audio already
+            print(f"[.] Found audio for {audio_files_count} out of {chapter_count} blinks.")
+          audio_files = scraper.scrape_book_audio(driver, book_json, args.language)
+
+        if (audio_files and args.concat_audio):
+            generator.combine_audio(book_json, audio_files, args.keep_noncat)
+      else:
+        print("[.] Concated audio already exists. Skipping downloads, not concatenating...")
     processed_books = process_book_json(book_json, processed_books)
   return dump_exists
 
 def finish(driver, start_time, processed_books):
-  if (driver): 
+  if (driver):
     driver.close()
   elapsed_time = time.time() - start_time
   formatted_time = '{:02d}:{:02d}:{:02d}'.format(int(elapsed_time // 3600), int(elapsed_time % 3600 // 60), int(elapsed_time % 60))
   print(f"[#] Processed {processed_books} books in {formatted_time}")
 
+#  Add code to turn this into a callable function
+
 if __name__ == '__main__':
   processed_books = 0
+  print('[.] Init...')
   start_time = time.time()
   try:
     if (args.no_scrape):
@@ -75,7 +111,32 @@ if __name__ == '__main__':
       start_headless = args.headless
       if not scraper.has_login_cookies():
         start_headless = False
-      driver = scraper.initialize_driver(headless=start_headless)
+      # add uBlock (if the conditions are right)
+      if not (args.book or args.headless): # causes problems, I think
+        use_ublock = True
+      else:
+        use_ublock = False
+      driver = scraper.initialize_driver(headless=start_headless, uBlock=use_ublock)
+
+      if (use_ublock):
+        print('[..] Configuring uBlock')
+
+        # set up uBlock
+        driver.get('chrome-extension://ilchdfhfciidacichehpmmjclkbfaecg/settings.html')
+
+        # Un-hide the file upload button so we can use it
+        element = driver.find_elements_by_class_name("hidden")
+        driver.execute_script("document.getElementsByClassName('hidden')[0].className = ''", element)
+        driver.execute_script("window.scrollTo(0, 2000)") # scroll down (for debugging)
+        uBlock_settings_file = str(os.path.join(os.getcwd(), "my-ublock-backup_2020-04-20_17.13.57.txt"))
+        driver.find_element_by_id("restoreFilePicker").send_keys(uBlock_settings_file) #upload
+        driver.switch_to.alert.accept() # click ok on pop up to accept overwrite
+        print('[..] uBlock configured')
+
+        # leave uBlock config
+        driver.get("about:blank")
+
+      print('[...] Starting Scraper, logging in. Loading homepage.')
       is_logged_in = scraper.login(driver, args.language, args.email, args.password)
       if (is_logged_in):
         if (args.book):
@@ -90,9 +151,9 @@ if __name__ == '__main__':
           categories = scraper.get_categories(driver, args.language, args.categories, args.ignore_categories)
           for category in categories:
             books_urls = scraper.get_all_books_for_categories(driver, category)
-            for book_url in books_urls: 
-              dump_exists = scrape_book(driver, processed_books, book_url, category=category, match_language=match_language)            
-              # if we processed the book from an existing dump 
+            for book_url in books_urls:
+              dump_exists = scrape_book(driver, processed_books, book_url, category=category, match_language=match_language)
+              # if we processed the book from an existing dump
               # no scraping was involved, no need to cooldown
               if not dump_exists:
                 time.sleep(args.cooldown)
@@ -104,7 +165,3 @@ if __name__ == '__main__':
       sys.exit(0)
     except SystemExit:
       os._exit(0)
-    
-
-
-

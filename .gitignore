@@ -111,9 +111,10 @@ dmypy.json
 
 .vscode
 env
-books/*
-dump/*
-debug.log
-webdrive.log
+books
+dump
 *.bat
+*.log
+*.cmd
+*.lnk
 cookies.pkl

@@ -6,7 +6,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait 
+from selenium.webdriver.support.ui import WebDriverWait
 
 from utils import *
 
@@ -46,17 +46,20 @@ def load_login_cookies(driver):
 def store_login_cookies(driver):
   pickle.dump( driver.get_cookies() , open("cookies.pkl","wb"))
 
-def initialize_driver(headless=True):
+def initialize_driver(headless=True, uBlock=False):
   print("[.] Initialising chromedriver...")
-  chrome_options = Options()  
+  chrome_options = Options()
   if (headless):
-    chrome_options.add_argument("--headless")  
+    chrome_options.add_argument("--headless")
     chrome_options.add_argument("window-size=1920,1080")
   chrome_options.add_argument("--log-level=3");
   chrome_options.add_argument("--silent");
   chrome_options.add_argument("--disable-logging")
   # this allows selenium to accept cookies with a non-int64 'expiry' value
   chrome_options.add_experimental_option("w3c", False)
+
+  if (uBlock): # add uBlock (to avoid un-needed recources)
+    chrome_options.add_extension("cjpalhdlnbpafiamejdnhcphjbkeiagm.crx")
 
   # check OS to pick the correct driver
   current_system = platform.system()
@@ -67,12 +70,12 @@ def initialize_driver(headless=True):
   else:
     print('[!] Unsupported OS.')
     sys.exit()
-  
+
   driver = webdriver.Chrome(
     executable_path=driver_path,
     service_log_path=os.path.join(path, "webdrive.log"),
     # Don't verify self-signed cert, should help with 502 errors (https://github.com/wkeeling/selenium-wire/issues/55)
-    # seleniumwire_options={'verify_ssl': False},   
+    # seleniumwire_options={'verify_ssl': False},
     options=chrome_options)
   return driver;
 
@@ -84,7 +87,7 @@ def login(driver, language, email, password):
   # if we have any stored login cookie, load them into the driver
   if has_login_cookies():
     load_login_cookies(driver)
-  
+
   # navigate to the login page and check for the login email input
   # if not found, assume we're logged in
   sign_in_url = f'https://www.blinkist.com/{language}/nc/login'
@@ -101,7 +104,7 @@ def login(driver, language, email, password):
     driver.find_element_by_id('login-form_login_email').send_keys(email)
     driver.find_element_by_id('login-form_login_password').send_keys(password)
     print("[!] Waiting for user to solve recaptcha and log in...")
-  
+
   try:
     WebDriverWait(driver, 360).until(EC.presence_of_element_located((By.CLASS_NAME, 'main-banner-headline-v2')))
   except TimeoutException as ex:
@@ -177,8 +180,8 @@ def scrape_book(driver, book_url, match_language="", category={ "label" : "Uncat
     return None, False
 
   # sanitize the book's title and author since they will be used for paths and such
-  book['title'] = re.sub(r'[\\/*?:"<>|.]', "", book['title']).strip()
-  book['author'] = re.sub(r'[\\/*?:"<>|.]', "", book['author']).strip()
+  book['title'] = sanitize_name(book['title'])
+  book['author'] = sanitize_name(book['author'])
 
   # scrape the chapter's content on the reader page
   # and extend the book json data by inserting the scraped content
@@ -211,7 +214,7 @@ def dump_book(book_json):
     json.dump(book_json, outfile, indent=4)
   return filepath
 
-def scrape_book_audio(driver, book_json, language): 
+def scrape_book_audio(driver, book_json, language):
   # check if there's a concatenated audio file already
   concat_audio = os.path.join(get_book_pretty_filepath(book_json), get_book_pretty_filename(book_json, ".m4a"))
   # short_concat_audio = os.path.join(get_book_pretty_filepath(book_json), get_book_short_pretty_filename(book_json, ".m4a"))
@@ -236,7 +239,7 @@ def scrape_book_audio(driver, book_json, language):
   # then its headers for future requests
   try:
    captured_request = driver.wait_for_request('audio', timeout=30)
-   audio_request_headers = captured_request.headers   
+   audio_request_headers = captured_request.headers
   except TimeoutException as ex:
     print('[!] Could not capture an audio endpoint request')
     return False;
@@ -268,7 +271,7 @@ def scrape_book_audio(driver, book_json, language):
       print(f'[!] Request timed out or other unexpected error: {e}')
       error = True
       break
-  
+
   if not error:
     return audio_files
   else:
