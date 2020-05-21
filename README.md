@@ -11,67 +11,66 @@ This script uses [ChromeDriver](chromedriver.chromium.org) to automate the Googl
 ## Usage
 
 ```text
-usage: main.py [-h] [--language {en,de}] [--match-language]
-               [--cooldown COOLDOWN] [--headless] [--audio] [--concat-audio]
-               [--keep-noncat] [--no-scrape] [--book BOOK] [--books BOOKS]
-               [--book-category BOOK_CATEGORY]
-               [--categories CATEGORIES [CATEGORIES ...]]
-               [--ignore-categories IGNORE_CATEGORIES [IGNORE_CATEGORIES ...]]
-               [--create-html] [--create-epub] [--create-pdf]
-               email password
+usage: blinkistscraper [-h] [--language {en,de}] [--match-language]
+                       [--cooldown COOLDOWN] [--headless] [--audio]
+                       [--concat-audio] [--keep-noncat] [--no-scrape]
+                       [--book BOOK] [--books BOOKS]
+                       [--book-category BOOK_CATEGORY]
+                       [--categories CATEGORIES [CATEGORIES ...]]
+                       [--ignore-categories IGNORE_CATEGORIES [IGNORE_CATEGORIES ...]]
+                       [--create-html] [--create-epub] [--create-pdf]
+                       email password
 
-Example with non-optional arguments
+Scrape blinkist.com and generate pretty output
 
 positional arguments:
-  email                The email to log into your premium Blinkist account    
-  password             The password to log into your premium Blinkist account
+  email                 The email to log into your premium Blinkist account
+  password              The password to log into your premium Blinkist account
 
 optional arguments:
-  -h, --help           show this help message and exit
-  --language {en,de}   The language to scrape books in - either 'en' for
-                       english or 'de' for german (default en)
-  --match-language     Skip scraping books if not in the requested language
-                       (not all book are avaible in german, default false)
-  --cooldown COOLDOWN  Seconds to wait between scraping books, and downloading
-                       audio files. Can't be smaller than 1 (default 1)
-  --headless           Start the automated web browser in headless mode. Works
-                       only if you already logged in once (default false)
-  --audio              Download the audio blinks for each book (default true)
-  --concat-audio       Concatenate the audio blinks into a single file and tag
-                       it. Requires ffmpeg (default false)
-  --keep-noncat        Keep the individual blink audio files, instead of deleting
-                       them, when concating the audio. Only relevant when using
-                       the the '--concat-audio' option (default false)
-  --no-scrape          Don't scrape the website, only process existing json
-                       files in the dump folder (default false)
-  --book BOOK          Scrapes this book only, takes the blinkist url for the
-                       book (e.g. https://www.blinkist.com/en/books/... or
-                       https://www.blinkist.com/en/nc/reader/...)
-
-  --books TEXT_FILE    Scrapes the list of books, takes a txt file with the
-                       list of blinkist urls for the books
-                       (e.g. https://www.blinkist.com/en/books/...
-                       or https://www.blinkist.com/en/nc/reader/...)
+  -h, --help            show this help message and exit
+  --language {en,de}    The language to scrape books in - either 'en' for
+                        english or 'de' for german
+  --match-language      Skip scraping books if not in the requested language
+                        (not all book are avaible in german)
+  --cooldown COOLDOWN   Seconds to wait between scraping books, and
+                        downloading audio files. Can't be smaller than 1
+  --headless            Start the automated web browser in headless mode.
+                        Works only if you already logged in once
+  --audio               Download the audio blinks for each book
+  --concat-audio        Concatenate the audio blinks into a single file and
+                        tag it. Requires ffmpeg
+  --keep-noncat         Keep the individual blink audio files, instead of
+                        deleting them (works with '--concat-audio' only
+  --no-scrape           Don't scrape the website, only process existing json
+                        files in the dump folder
+  --book BOOK           Scrapes this book only, takes the blinkist url for the
+                        book(e.g. https://www.blinkist.com/en/books/... or
+                        https://www.blinkist.com/en/nc/reader/...)
+  --books BOOKS         Scrapes the list of books, takes a txt file with the
+                        list of blinkist urls for the books(e.g.
+                        https://www.blinkist.com/en/books/... or
+                        https://www.blinkist.com/en/nc/reader/...)
   --book-category BOOK_CATEGORY
-                       When scraping a single book, categorize it under this
-                       category (works with '--book' only)
+                        When scraping a single book, categorize it under this
+                        category (works with '--book' only)
   --categories CATEGORIES [CATEGORIES ...]
-                       Only the categories whose label contains at least one
-                       string here will be scraped. Case-insensitive; use
-                       spaces to separate categories. (e.g. "--categories
-                       entrep market" will only scrape books under
-                       "Entrepreneurship" and "Marketing & Sales")
+                        Only the categories whose label contains at least one
+                        string here will be scraped.Case-insensitive; use
+                        spaces to separate categories. (e.g. '--categories
+                        entrep market' will only scrape books under
+                        'Entrepreneurship' and 'Marketing & Sales')
   --ignore-categories IGNORE_CATEGORIES [IGNORE_CATEGORIES ...]
-                       If a category label contains anything in
-                       ignored_categories, books under that category will not
-                       be scraped. Case-insensitive; use spaces to separate
-                       categories. (e.g. "--ignored-categories entrep market"
-                       will skip scraping of "Entrepreneurship" and
-                       "Marketing & Sales")
-  --create-html        Generate a formatted html document for the book (default true)
-  --create-epub        Generate a formatted epub document for the book (default true)
-  --create-pdf         Generate a formatted pdf document for the book.
-                       Requires wkhtmltopdf (default false)
+                        If a category label contains anything in
+                        ignored_categories, books under that category will not
+                        be scraped. Case-insensitive; use spaces to separate
+                        categories. (e.g. '--ignored-categories entrep market'
+                        will skip scraping of 'Entrepreneurship' and
+                        'Marketing & Sales')
+  --create-html         Generate a formatted html document for the book
+  --create-epub         Generate a formatted epub document for the book
+  --create-pdf          Generate a formatted pdf document for the book.
+                        Requires wkhtmltopdf
 ```
 
 ## Basic usage

@@ -10,28 +10,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from utils import *
 
-try:
-  # PyInstaller creates a temp folder and stores path in _MEIPASS
-  path = sys._MEIPASS + "/"
-except Exception:
-  path = os.path.dirname(os.path.realpath(__file__)) + "/"
-
 def has_login_cookies():
   return os.path.exists("cookies.pkl")
-  # if os.path.exists("cookies.pkl"):
-  #   now = datetime.now()
-  #   for cookie in get_login_cookies():
-  #     if 'expiry' in cookie:
-  #       try:
-  #         expiry = datetime.fromtimestamp(int(cookie['expiry']))
-  #         if (expiry < now):
-  #           print("[.] Login cookies expired, need revalidating...")
-  #           return False
-  #       except:
-  #         pass
-  #   return True
-  # else:
-  #   return False
 
 def get_login_cookies():
   return pickle.load(open("cookies.pkl", "rb"))
@@ -46,7 +26,7 @@ def load_login_cookies(driver):
 def store_login_cookies(driver):
   pickle.dump( driver.get_cookies() , open("cookies.pkl","wb"))
 
-def initialize_driver(headless=True, uBlock=False):
+def initialize_driver(headless=True, with_ublock=False):
   print("[.] Initialising chromedriver...")
   chrome_options = Options()
   if (headless):
@@ -58,25 +38,48 @@ def initialize_driver(headless=True, uBlock=False):
   # this allows selenium to accept cookies with a non-int64 'expiry' value
   chrome_options.add_experimental_option("w3c", False)
 
-  if (uBlock): # add uBlock (to avoid un-needed recources)
-    chrome_options.add_extension("cjpalhdlnbpafiamejdnhcphjbkeiagm.crx")
+  if (with_ublock): # add uBlock (to avoid un-needed recources)
+    chrome_options.add_extension(os.path.join(os.getcwd(), 'bin', 'ublock', "ublock-extension.crx"))
 
   # check OS to pick the correct driver
   current_system = platform.system()
   if (current_system == 'Windows'):
-    driver_path = os.path.join(path, "bin", "chromedriver.exe")
+    driver_path = os.path.join(os.getcwd(), "bin", "chromedriver.exe")
   elif (current_system == 'Darwin'):
-    driver_path = os.path.join(path, "bin", "chromedriver")
+    driver_path = os.path.join(os.getcwd(), "bin", "chromedriver")
   else:
     print('[!] Unsupported OS.')
     sys.exit()
 
+  logs_path = os.path.join(os.getcwd(), "logs")
+  if not (os.path.isdir(logs_path)):
+    os.makedirs(logs_path)
+
   driver = webdriver.Chrome(
     executable_path=driver_path,
-    service_log_path=os.path.join(path, "webdrive.log"),
+    service_log_path=os.path.join(logs_path, "webdrive.log"),
     # Don't verify self-signed cert, should help with 502 errors (https://github.com/wkeeling/selenium-wire/issues/55)
     # seleniumwire_options={'verify_ssl': False},
     options=chrome_options)
+
+  if (with_ublock):
+    print('[..] Configuring uBlock')
+
+    # set up uBlock
+    driver.get('chrome-extension://ilchdfhfciidacichehpmmjclkbfaecg/settings.html')
+
+    # Un-hide the file upload button so we can use it
+    element = driver.find_elements_by_class_name("hidden")
+    driver.execute_script("document.getElementsByClassName('hidden')[0].className = ''", element)
+    driver.execute_script("window.scrollTo(0, 2000)") # scroll down (for debugging)
+    uBlock_settings_file = str(os.path.join(os.getcwd(), 'bin', 'ublock', "ublock-settings.txt"))
+    driver.find_element_by_id("restoreFilePicker").send_keys(uBlock_settings_file) #upload
+    driver.switch_to.alert.accept() # click ok on pop up to accept overwrite
+    print('[..] uBlock configured')
+
+    # leave uBlock config
+    driver.get("about:blank")
+
   return driver;
 
 def login(driver, language, email, password):
@@ -154,7 +157,7 @@ def get_all_books_for_categories(driver, category):
   print(f"[.] Found {len(books_links)} books")
   return books_links;
 
-def scrape_book(driver, book_url, match_language="", category={ "label" : "Uncategorized"}, force=False):
+def scrape_book_data(driver, book_url, match_language="", category={ "label" : "Uncategorized"}, force=False):
   # check if this book has already been dumped, unless we are forcing scraping
   # if so return the content of the dump, alonside with a flash saying it already existed
   if (os.path.exists(get_book_dump_filename(book_url)) and not force):
@@ -216,11 +219,11 @@ def dump_book(book_json):
 
 def scrape_book_audio(driver, book_json, language):
   # check if there's a concatenated audio file already
-  concat_audio = os.path.join(get_book_pretty_filepath(book_json), get_book_pretty_filename(book_json, ".m4a"))
+  # concat_audio = os.path.join(get_book_pretty_filepath(book_json), get_book_pretty_filename(book_json, ".m4a"))
   # short_concat_audio = os.path.join(get_book_pretty_filepath(book_json), get_book_short_pretty_filename(book_json, ".m4a"))
-  if (os.path.exists(concat_audio)): # or os.path.exists(short_concat_audio)):
-    print(f"[.] Audio file for {book_json['slug']} already exists, skipping scraping audio...")
-    return False
+  # if (os.path.exists(concat_audio)): # or os.path.exists(short_concat_audio)):
+  #   print(f"[.] Audio file for {book_json['slug']} already exists, skipping scraping audio...")
+  #   return False
 
   # check if the book actually has audio blinks
   if not (book_json['is_audio']):

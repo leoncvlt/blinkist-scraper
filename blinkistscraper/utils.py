@@ -32,9 +32,5 @@ def get_book_pretty_filename(book_json, extension=""):
   title = sanitize_name(book_json['title'])
   return f"{author} - {title}" + extension
 
-# def get_book_short_pretty_filename(book_json, extension=""):
-#   title = sanitize_name(book_json['title'])
-#   return f"{title}" + extension
-
 def is_installed(tool):
   return which(tool)

@@ -15,17 +15,17 @@ def generate_book_html(book_json_or_file):
 
   # open the book html template and replace every occurency of {{key}}
   # with the relevant parameter from the json file
-  book_template_file = open(os.path.join("templates", "book.html"), "r")
+  book_template_file = open(os.path.join(os.getcwd(), "templates", "book.html"), "r")
   book_template = book_template_file.read()
   book_html = book_template
-  for key in book_json:
+  for key in book_json: 
     book_html = book_html.replace(f'{{{key}}}', str(book_json[key]))
 
   # when the special tag {__chapters__} is found, open the chapter template file
   # and do the same, then add the template chapter's html into the book's html
   if ('{__chapters__}' in book_template):
     chapters_html = []
-    chapter_template_file = open(os.path.join("templates", "chapter.html"), "r")
+    chapter_template_file = open(os.path.join(os.getcwd(), "templates", "chapter.html"), "r")
     chapter_template = chapter_template_file.read()
     for chapter_json in book_json['chapters']:
       chapter_html = chapter_template
@@ -77,7 +77,7 @@ def generate_book_epub(book_json_or_file):
   book.add_item(epub.EpubNav())
 
   # define CSS style
-  style = open(os.path.join("templates", "epub.css"), "r").read()
+  style = open(os.path.join(os.getcwd(), "templates", "epub.css"), "r").read()
   nav_css = epub.EpubItem(uid="style_nav", file_name="style/nav.css", media_type="text/css", content=style)
   book.add_item(nav_css)
 
