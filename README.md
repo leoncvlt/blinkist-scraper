@@ -11,9 +11,12 @@ This script uses [ChromeDriver](chromedriver.chromium.org) to automate the Googl
 ## Usage
 
 ```text
-usage: main.py [-h] [--language {de,en}] [--match-language]
+usage: main.py [-h] [--language {en,de}] [--match-language]
                [--cooldown COOLDOWN] [--headless] [--audio] [--concat-audio]
-               [--no-scrape] [--book BOOK] [--books BOOKS] [--category CATEGORY]
+               [--keep-noncat] [--no-scrape] [--book BOOK] [--books BOOKS]
+               [--book-category BOOK_CATEGORY]
+               [--categories CATEGORIES [CATEGORIES ...]]
+               [--ignore-categories IGNORE_CATEGORIES [IGNORE_CATEGORIES ...]]
                [--create-html] [--create-epub] [--create-pdf]
                email password
 
