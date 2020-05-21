@@ -1,5 +1,6 @@
 import os, time, requests, subprocess, argparse, json, pickle, html, argparse, time, re, sys, platform
 from datetime import datetime
+import chromedriver_autoinstaller
 from seleniumwire import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
@@ -26,8 +27,17 @@ def load_login_cookies(driver):
 def store_login_cookies(driver):
   pickle.dump( driver.get_cookies() , open("cookies.pkl","wb"))
 
-def initialize_driver(headless=True, with_ublock=False):
-  print("[.] Initialising chromedriver...")
+def initialize_driver(headless=True, with_ublock=False, chromedriver_path=None):
+  if (not chromedriver_path):
+    try:
+      chromedriver_path = chromedriver_autoinstaller.install()
+    except Exception as exception:
+      print(f"[!] Failed to install the built-in chromedriver: {exception}\n" + 
+      "download the correct version for your system at https://chromedriver.chromium.org/downloads" + 
+      "and use the --chromedriver argument to point to the chromedriver executable")
+      sys.exit()
+
+  print(f"[.] Initialising chromedriver at {chromedriver_path}...")
   chrome_options = Options()
   if (headless):
     chrome_options.add_argument("--headless")
@@ -38,25 +48,15 @@ def initialize_driver(headless=True, with_ublock=False):
   # this allows selenium to accept cookies with a non-int64 'expiry' value
   chrome_options.add_experimental_option("w3c", False)
 
-  if (with_ublock): # add uBlock (to avoid un-needed recources)
+  if (with_ublock): 
     chrome_options.add_extension(os.path.join(os.getcwd(), 'bin', 'ublock', "ublock-extension.crx"))
-
-  # check OS to pick the correct driver
-  current_system = platform.system()
-  if (current_system == 'Windows'):
-    driver_path = os.path.join(os.getcwd(), "bin", "chromedriver.exe")
-  elif (current_system == 'Darwin'):
-    driver_path = os.path.join(os.getcwd(), "bin", "chromedriver")
-  else:
-    print('[!] Unsupported OS.')
-    sys.exit()
 
   logs_path = os.path.join(os.getcwd(), "logs")
   if not (os.path.isdir(logs_path)):
     os.makedirs(logs_path)
 
   driver = webdriver.Chrome(
-    executable_path=driver_path,
+    executable_path=chromedriver_path,
     service_log_path=os.path.join(logs_path, "webdrive.log"),
     # Don't verify self-signed cert, should help with 502 errors (https://github.com/wkeeling/selenium-wire/issues/55)
     # seleniumwire_options={'verify_ssl': False},

@@ -51,6 +51,7 @@ parser.add_argument("--create-epub", action="store_true", default=True,
                     help="Generate a formatted epub document for the book")
 parser.add_argument("--create-pdf", action="store_true", default=False, 
                     help="Generate a formatted pdf document for the book. Requires wkhtmltopdf")
+parser.add_argument("--chromedriver", help='Path to a specific chromedriver executable instead of the built-in one')
 
 args = parser.parse_args()
 
@@ -130,7 +131,10 @@ def main():
       start_headless = False
     # add uBlock (if the conditions are right)
     use_ublock = not (args.book or args.headless)
-    driver = scraper.initialize_driver(headless=start_headless, with_ublock=use_ublock)
+    driver = scraper.initialize_driver(
+      headless=start_headless, 
+      with_ublock=use_ublock, 
+      chromedriver_path=args.chromedriver)
 
     is_logged_in = scraper.login(driver, args.language, args.email, args.password)
     if (is_logged_in):
@@ -141,7 +145,8 @@ def main():
         # scrape list of books
         with open(args.books, 'r') as books_urls:
           for book_url in books_urls.readlines():
-            dump_exists = scrape_book(driver, processed_books, book_url.strip(), category={ "label" : args.book_category}, match_language=match_language)
+            dump_exists = scrape_book(
+              driver, processed_books, book_url.strip(), category={ "label" : args.book_category}, match_language=match_language)
             if not dump_exists:           
               time.sleep(args.cooldown)
       else:
