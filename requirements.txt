@@ -1,6 +1,7 @@
 certifi==2020.4.5.1
 chardet==3.0.4
 chromedriver-autoinstaller==0.2.0
+colorama==0.4.3
 EbookLib==0.17.1
 idna==2.9
 lxml==4.5.0
