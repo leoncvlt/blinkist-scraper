@@ -1,6 +1,5 @@
-import os, json
+import os, json, re
 from shutil import which
-import re
 
 def get_or_read_json(book_json_or_file):
   if (type(book_json_or_file) is dict):
@@ -10,8 +9,6 @@ def get_or_read_json(book_json_or_file):
       return json.load(f)
 
 def sanitize_name(name):
-  # from scraper.py line:162
-  # book['title'] = re.sub(r'[\\/*?:"<>|.]', "", book['title']).strip()
   return re.sub(r'[\\/*?:"<>|.]', "", name).strip()
 
 def get_book_dump_filename(book_json_or_url):

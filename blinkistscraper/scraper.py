@@ -1,4 +1,4 @@
-import os, time, requests, subprocess, argparse, json, pickle, html, argparse, time, re, sys, platform
+import os, time, requests, subprocess, argparse, json, pickle, html, argparse, time, re, sys, platform, logging
 from datetime import datetime
 import chromedriver_autoinstaller
 from seleniumwire import webdriver
@@ -10,6 +10,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 
 from utils import *
+
+log = logging.getLogger(f"loconotion.{__name__}")
 
 def has_login_cookies():
   return os.path.exists("cookies.pkl")
@@ -32,12 +34,12 @@ def initialize_driver(headless=True, with_ublock=False, chromedriver_path=None):
     try:
       chromedriver_path = chromedriver_autoinstaller.install()
     except Exception as exception:
-      print(f"[!] Failed to install the built-in chromedriver: {exception}\n" + 
+      log.critical(f"Failed to install the built-in chromedriver: {exception}\n" + 
       "download the correct version for your system at https://chromedriver.chromium.org/downloads" + 
       "and use the --chromedriver argument to point to the chromedriver executable")
       sys.exit()
 
-  print(f"[.] Initialising chromedriver at {chromedriver_path}...")
+  log.info(f"Initialising chromedriver at {chromedriver_path}...")
   chrome_options = Options()
   if (headless):
     chrome_options.add_argument("--headless")
@@ -45,8 +47,10 @@ def initialize_driver(headless=True, with_ublock=False, chromedriver_path=None):
   chrome_options.add_argument("--log-level=3");
   chrome_options.add_argument("--silent");
   chrome_options.add_argument("--disable-logging")
-  # this allows selenium to accept cookies with a non-int64 'expiry' value
+  # allows selenium to accept cookies with a non-int64 'expiry' value
   chrome_options.add_experimental_option("w3c", False)
+  # removes the 'DevTools listening' log message
+  chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
 
   if (with_ublock): 
     chrome_options.add_extension(os.path.join(os.getcwd(), 'bin', 'ublock', "ublock-extension.crx"))
@@ -63,7 +67,7 @@ def initialize_driver(headless=True, with_ublock=False, chromedriver_path=None):
     options=chrome_options)
 
   if (with_ublock):
-    print('[..] Configuring uBlock')
+    log.debug('Configuring uBlock')
 
     # set up uBlock
     driver.get('chrome-extension://ilchdfhfciidacichehpmmjclkbfaecg/settings.html')
@@ -74,8 +78,8 @@ def initialize_driver(headless=True, with_ublock=False, chromedriver_path=None):
     driver.execute_script("window.scrollTo(0, 2000)") # scroll down (for debugging)
     uBlock_settings_file = str(os.path.join(os.getcwd(), 'bin', 'ublock', "ublock-settings.txt"))
     driver.find_element_by_id("restoreFilePicker").send_keys(uBlock_settings_file) #upload
+    #TODO: wait for alert to appear on screen to make sure we intercept it
     driver.switch_to.alert.accept() # click ok on pop up to accept overwrite
-    print('[..] uBlock configured')
 
     # leave uBlock config
     driver.get("about:blank")
@@ -103,15 +107,15 @@ def login(driver, language, email, password):
   # if not logged in, autofill the email and password inputs with the provided data
   # the user will still have to solve the captcha and click the log in button afterwards
   if not is_logged_in:
-    print("[.] Not logged into Blinkist: navigating to sign in page...")
+    log.info("Not logged into Blinkist: navigating to sign in page...")
     driver.find_element_by_id('login-form_login_email').send_keys(email)
     driver.find_element_by_id('login-form_login_password').send_keys(password)
-    print("[!] Waiting for user to solve recaptcha and log in...")
+    log.info("Waiting for user to solve recaptcha and log in...")
 
   try:
     WebDriverWait(driver, 360).until(EC.presence_of_element_located((By.CLASS_NAME, 'main-banner-headline-v2')))
   except TimeoutException as ex:
-    print("[x] Error logging in.")
+    log.error("Error logging in.")
     return False;
 
   # login successful, store login cookies for future operations
@@ -143,30 +147,30 @@ def get_categories(driver, language, specified_categories=None, ignored_categori
       'url': href
     }
     categories_links.append(category);
-  print(f"[.] Scraping for categories: {[ c['label'] for c in categories_links ]}")
+  log.info(f"Scraping for categories: {[ c['label'] for c in categories_links ]}")
   return categories_links;
 
 def get_all_books_for_categories(driver, category):
-  print(f"[.] Getting all books for category {category['label']}...")
+  log.info(f"Getting all books for category {category['label']}...")
   books_links = []
   driver.get(category['url'] + '/books')
   books_items = driver.find_elements_by_class_name("letter-book-list__item")
   for item in books_items:
     href = item.get_attribute('href')
     books_links.append(href);
-  print(f"[.] Found {len(books_links)} books")
+  log.info(f"Found {len(books_links)} books")
   return books_links;
 
 def scrape_book_data(driver, book_url, match_language="", category={ "label" : "Uncategorized"}, force=False):
   # check if this book has already been dumped, unless we are forcing scraping
   # if so return the content of the dump, alonside with a flash saying it already existed
   if (os.path.exists(get_book_dump_filename(book_url)) and not force):
-    print(f"[.] Json dump for book {book_url} already exists, skipping scraping...")
+    log.debug(f"Json dump for book {book_url} already exists, skipping scraping...")
     with open(get_book_dump_filename(book_url)) as f:
       return json.load(f), True
 
   # if not, proceed scraping the reader page
-  print(f"[.] Scraping book at {book_url}")
+  log.info(f"Scraping book at {book_url}")
   if not "/nc/reader/" in book_url:
    book_url = book_url.replace("/books/", "/nc/reader/");
   if not driver.current_url == book_url:
@@ -179,7 +183,7 @@ def scrape_book_data(driver, book_url, match_language="", category={ "label" : "
   book = book_json['book']
 
   if (match_language and book['language'] != match_language):
-    print(f"[!] Book not available in the selected language ({match_language}), skipping scraping...")
+    log.warning(f"Book not available in the selected language ({match_language}), skipping scraping...")
     return None, False
 
   # sanitize the book's title and author since they will be used for paths and such
@@ -222,12 +226,12 @@ def scrape_book_audio(driver, book_json, language):
   # concat_audio = os.path.join(get_book_pretty_filepath(book_json), get_book_pretty_filename(book_json, ".m4a"))
   # short_concat_audio = os.path.join(get_book_pretty_filepath(book_json), get_book_short_pretty_filename(book_json, ".m4a"))
   # if (os.path.exists(concat_audio)): # or os.path.exists(short_concat_audio)):
-  #   print(f"[.] Audio file for {book_json['slug']} already exists, skipping scraping audio...")
+  #   log.info(f"Audio file for {book_json['slug']} already exists, skipping scraping audio...")
   #   return False
 
   # check if the book actually has audio blinks
   if not (book_json['is_audio']):
-    print(f"[.] Book {book_json['slug']} does not have audio blinks, skipping scraping audio...")
+    log.debug(f"Book {book_json['slug']} does not have audio blinks, skipping scraping audio...")
     return False
 
   # clear out previous captured requests and restrict scope to the blinkist site
@@ -244,7 +248,7 @@ def scrape_book_audio(driver, book_json, language):
    captured_request = driver.wait_for_request('audio', timeout=30)
    audio_request_headers = captured_request.headers
   except TimeoutException as ex:
-    print('[!] Could not capture an audio endpoint request')
+    log.error('Could not capture an audio endpoint request')
     return False;
 
   audio_files = []
@@ -262,23 +266,23 @@ def scrape_book_audio(driver, book_json, language):
         audio_file = download_book_chapter_audio(book_json, chapter_json['order_no'], audio_url)
         audio_files.append(audio_file)
       else:
-        print('[!] Could not find audio url in request, aborting audio scrape...')
+        log.warning('Could not find audio url in request, aborting audio scrape...')
         error = True
         break
     except json.decoder.JSONDecodeError:
-      print(f'[!] Received malformed json data: {audio_request.text}')
-      print('[!] Could not find audio url in request, aborting audio scrape...')
+      log.error(f'Received malformed json data: {audio_request.text}')
+      log.warning('Could not find audio url in request, aborting audio scrape...')
       error = True
       break
     except Exception as e:
-      print(f'[!] Request timed out or other unexpected error: {e}')
+      log.error(f'Request timed out or other unexpected error: {e}')
       error = True
       break
 
   if not error:
     return audio_files
   else:
-    print('[!] Error processing audio url, aborting audio scrape...')
+    log.error('Error processing audio url, aborting audio scrape...')
     return []
 
 def download_book_chapter_audio(book_json, chapter_no, audio_url):
@@ -288,10 +292,10 @@ def download_book_chapter_audio(book_json, chapter_no, audio_url):
   if not os.path.exists(filepath):
     os.makedirs(filepath)
   if not os.path.exists(audio_file):
-    print(f"[.] Downloading audio file for blink {chapter_no}...")
+    log.info(f"Downloading audio file for blink {chapter_no} of {book_json['slug']}...")
     download_request = requests.get(audio_url)
     with open(audio_file, 'wb') as outfile:
       outfile.write(download_request.content)
   else:
-     print(f"[.] Audio for blink {chapter_no} already downloaded, skipping...")
+     log.debug(f"Audio for blink {chapter_no} already downloaded, skipping...")
   return audio_file

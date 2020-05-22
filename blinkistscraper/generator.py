@@ -1,7 +1,9 @@
-import os, json, subprocess
+import os, json, subprocess, logging
 
 from utils import *
 from ebooklib import epub
+
+log = logging.getLogger(f"loconotion.{__name__}")
 
 def generate_book_html(book_json_or_file):
   book_json = get_or_read_json(book_json_or_file)
@@ -9,9 +11,9 @@ def generate_book_html(book_json_or_file):
   filename = get_book_pretty_filename(book_json, ".html")
   html_file = os.path.join(filepath, filename)
   if (os.path.exists(html_file)):
-    print(f"[.] Html file for {book_json['slug']} already exists, not generating...")
+    log.debug(f"Html file for {book_json['slug']} already exists, not generating...")
     return html_file
-  print(f"[.] Generating .html for {book_json['slug']}")
+  log.info(f"Generating .html for {book_json['slug']}")
 
   # open the book html template and replace every occurency of {{key}}
   # with the relevant parameter from the json file
@@ -49,9 +51,9 @@ def generate_book_epub(book_json_or_file):
   filename = get_book_pretty_filename(book_json, ".epub")
   epub_file = os.path.join(filepath, filename)
   if (os.path.exists(epub_file)):
-    print(f"[.] Epub file for {book_json['slug']} already exists, not generating...")
+    log.debug(f"Epub file for {book_json['slug']} already exists, not generating...")
     return epub_file
-  print(f"[.] Generating .epub for {book_json['slug']}")
+  log.info(f"Generating .epub for {book_json['slug']}")
   book = epub.EpubBook()
 
   # set metadata
@@ -92,7 +94,7 @@ def generate_book_epub(book_json_or_file):
 
 def generate_book_pdf(book_json_or_file):
   if not is_installed("wkhtmltopdf"):
-    print(f"[!] wkhtmltopdf needs to be installed and added to PATH to generate pdf files")
+    log.warning(f"wkhtmltopdf needs to be installed and added to PATH to generate pdf files")
     return
 
   book_json = get_or_read_json(book_json_or_file)
@@ -100,7 +102,7 @@ def generate_book_pdf(book_json_or_file):
   filename = get_book_pretty_filename(book_json, ".pdf")
   pdf_file = os.path.join(filepath, filename)
   if (os.path.exists(pdf_file)):
-    print(f"[.] Pdf file for {book_json['slug']} already exists, not generating...")
+    log.debug(f"Pdf file for {book_json['slug']} already exists, not generating...")
     return pdf_file
 
   # generates the html file if it doesn't already exists
@@ -108,21 +110,17 @@ def generate_book_pdf(book_json_or_file):
   if not os.path.exists(html_file):
     generate_book_html(book_json_or_file)
 
-  print(f"[.] Generating .pdf for {book_json['slug']}")
+  log.debug(f"Generating .pdf for {book_json['slug']}")
   pdf_command = f"wkhtmltopdf --quiet \"{html_file}\" \"{pdf_file}\""
   os.system(pdf_command)
   return pdf_file
 
 def combine_audio(book_json, files, keep_blinks=False):
   if not is_installed("ffmpeg"):
-    print(f"[!] ffmpeg needs to be installed and added to PATH to combine audio files")
+    log.warning(f"ffmpeg needs to be installed and added to PATH to combine audio files")
     return
 
-  if keep_blinks:
-    action_text = "keeping originals of"
-  else:
-    action_text = "deleting"
-  print(f"[.] Combining, and {action_text}, audio files for {book_json['slug']}")
+  log.info(f"Combining audio files for {book_json['slug']}")
   filepath = get_book_pretty_filepath(book_json)
   filename = get_book_pretty_filename(book_json, ".m4a")
 
@@ -132,10 +130,10 @@ def combine_audio(book_json, files, keep_blinks=False):
 
   # ffmpeg fails on windows if the output filepath is longer than 260 chars
   # if len(tagged_audio_file) >= 260:
-  #   print(f"[!] ffmpeg output file longer than 260 characters. Trying shorter filename...")
+  #   log.info(f"[!] ffmpeg output file longer than 260 characters. Trying shorter filename...")
   #   tagged_audio_file = os.path.abspath(os.path.join(filepath, get_book_short_pretty_filename(book_json, ".m4a")))
   #   if len(tagged_audio_file) >= 260:
-  #     print(f"[!] shorter filename still too long! Consider running the script from a shorter path.")
+  #     log.info(f"[!] shorter filename still too long! Consider running the script from a shorter path.")
   #     return
 
   with open(files_list, 'w',  encoding='utf-8') as outfile:
@@ -155,6 +153,7 @@ def combine_audio(book_json, files, keep_blinks=False):
   if (os.path.exists(combined_audio_file)):
     os.remove(combined_audio_file)
   if not (keep_blinks):
+    log.debug(f"Cleaning up individual audio files for {book_json['slug']}")
     for file in files:
       if (os.path.exists(file)):
         os.remove(os.path.abspath(file))

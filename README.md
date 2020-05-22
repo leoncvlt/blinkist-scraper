@@ -8,6 +8,8 @@ A python script to download book summaries and audio from [Blinkist](https://www
 
 This script uses [ChromeDriver](chromedriver.chromium.org) to automate the Google Chrome browser - therefore Google Chrome needs to be installed in order to work.
 
+The script will automatically try to download and use the appropriate chromedriver distribution for your OS and Chrome version. If this doesn't work, download the right version for you from https://chromedriver.chromium.org/downloads and use the `--chromedriver` argument to specify its path at runtime.
+
 ## Usage
 
 ```text
@@ -19,9 +21,8 @@ usage: blinkistscraper [-h] [--language {en,de}] [--match-language]
                        [--categories CATEGORIES [CATEGORIES ...]]
                        [--ignore-categories IGNORE_CATEGORIES [IGNORE_CATEGORIES ...]]
                        [--create-html] [--create-epub] [--create-pdf]
+                       [--chromedriver CHROMEDRIVER] [-v]
                        email password
-
-Scrape blinkist.com and generate pretty output
 
 positional arguments:
   email                 The email to log into your premium Blinkist account
@@ -71,6 +72,10 @@ optional arguments:
   --create-epub         Generate a formatted epub document for the book
   --create-pdf          Generate a formatted pdf document for the book.
                         Requires wkhtmltopdf
+  --chromedriver CHROMEDRIVER
+                        Path to a specific chromedriver executable instead of
+                        the built-in one
+  -v, --verbose         Increases logging verbosity
 ```
 
 ## Basic usage
@@ -96,4 +101,4 @@ Add the `--concat-audio` argument to the script to concatenate the individual au
 During scraping, the script saves all book's metadata in json files inside the `dump` folder. Those can be used by the script to re-generate the .html, .epub and .pdf output files without having to scrape the website again. To do so, pass the `--no-scrape` argument to the script.
 
 # Quirks & known Bugs
-- Some people have had troubles when dealing with long generated book files (> 260 characters in Windows). Although this should be handled gracefully by the script, if you keep seeing "FileNotFoundError" when trying to create the .html / .m4a files, try and turn on long filenames support on your system: https://www.itprotoday.com/windows-10/enable-long-file-name-support-windows-10
+- Some people have had troubles when dealing with long generated book files (> 260 characters in Windows). Although this should be handled gracefully by the script, if you keep seeing "FileNotFoundError" when trying to create the .html / .m4a files, try and turn on long filenames support on your system: https://www.itprotoday.com/windows-10/enable-long-file-name-support-windows-10, and make sure you have a recent distribution of ffmpeg if using it (old versions had some bugs in dealing with long filenames)
