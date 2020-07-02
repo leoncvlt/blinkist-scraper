@@ -41,8 +41,10 @@ optional arguments:
   --audio               Download the audio blinks for each book
   --concat-audio        Concatenate the audio blinks into a single file and
                         tag it. Requires ffmpeg
+  --embed-cover-art     Embed the Blink cover artwork into the concatenated
+                        audio file (works with '--concat-audio' only)
   --keep-noncat         Keep the individual blink audio files, instead of
-                        deleting them (works with '--concat-audio' only
+                        deleting them (works with '--concat-audio' only)
   --no-scrape           Don't scrape the website, only process existing json
                         files in the dump folder
   --book BOOK           Scrapes this book only, takes the blinkist url for the
@@ -72,6 +74,8 @@ optional arguments:
   --create-epub         Generate a formatted epub document for the book
   --create-pdf          Generate a formatted pdf document for the book.
                         Requires wkhtmltopdf
+  --save-cover          Save a copy of the Blink cover artwork in the folder.
+                        This image is used, also, by the generated HTML file.
   --chromedriver CHROMEDRIVER
                         Path to a specific chromedriver executable instead of
                         the built-in one

@@ -1,4 +1,5 @@
 import os, time, requests, subprocess, argparse, json, pickle, html, argparse, time, re, sys, platform, logging
+from shutil import copyfile as copy_file
 from datetime import datetime
 import chromedriver_autoinstaller
 from seleniumwire import webdriver
@@ -299,3 +300,43 @@ def download_book_chapter_audio(book_json, chapter_no, audio_url):
   else:
      log.debug(f"Audio for blink {chapter_no} already downloaded, skipping...")
   return audio_file
+
+def download_book_cover_image(book_json, filename='_cover.jpg', size='640', type='1_1', alt_file='cover.jpg'):
+  """ Downloads the cover image specified in "book_json".
+
+  book_json -- dictionary object with book metadata. 
+  filename -- filename of the output files
+  size -- the width of the image in pixels. The "sizes" options (generally) are: 130, 250, 470, 640, 1080, and 1400.
+  type -- the aspect ratio of for the cover image. The "types" options (generally) are: "1_1", "2-2_1", and "3_4".
+  alt_file -- an identical file to the expected image, but with a different name.
+
+  The default "image_url" (used by the HTML output) is type: "3_4", size: 640.
+  """
+
+  # default cover image:
+  # cover_img_url = book_json["image_url"]
+
+  # variable size/resolution: (default is 640*640 px)
+  cover_img_url_tmplt = book_json["images"]["url_template"]
+  cover_img_url = cover_img_url_tmplt.replace('%type%', type).replace('%size%', size)
+
+  filepath = get_book_pretty_filepath(book_json)
+  cover_img_file = os.path.join(filepath, filename)
+  cover_img_alt_file = os.path.join(filepath, alt_file)
+  if not os.path.exists(filepath):
+    os.makedirs(filepath)
+  if not os.path.exists(cover_img_file):
+    # check if we have the "alternative" image file avaible
+    if not os.path.exists(cover_img_alt_file):
+      # download the image
+      log.info(f'Downloading "{cover_img_url}" as "{filename}"')
+      download_request = requests.get(cover_img_url)
+      with open(cover_img_file, 'wb') as outfile:
+        outfile.write(download_request.content)
+    else:
+      # copy the image file
+      log.debug(f'Copying {alt_file} as {filename}')
+      copy_file(cover_img_alt_file, cover_img_file)
+  else:
+     log.debug(f'{filename} already exists, skipping...')
+  return cover_img_file

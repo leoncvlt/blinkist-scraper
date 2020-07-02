@@ -5,7 +5,7 @@ from ebooklib import epub
 
 log = logging.getLogger(f"loconotion.{__name__}")
 
-def generate_book_html(book_json_or_file):
+def generate_book_html(book_json_or_file, cover_img_file=False):
   book_json = get_or_read_json(book_json_or_file)
   filepath = get_book_pretty_filepath(book_json)
   filename = get_book_pretty_filename(book_json, ".html")
@@ -22,6 +22,11 @@ def generate_book_html(book_json_or_file):
   book_html = book_template
   for key in book_json: 
     book_html = book_html.replace(f'{{{key}}}', str(book_json[key]))
+
+  if (cover_img_file):
+    # replace the online (https://blinkist) URL with a local (/.jpg) one
+    cover_img_url = book_json['image_url']
+    book_html = book_html.replace(cover_img_url, cover_img_file)
 
   # when the special tag {__chapters__} is found, open the chapter template file
   # and do the same, then add the template chapter's html into the book's html
@@ -65,6 +70,7 @@ def generate_book_epub(book_json_or_file):
 
   # add chapters
   chapters = []
+  # to-do: add who is this for / intro section with cover image
   for chapter_json in book_json['chapters']:
     chapter = epub.EpubHtml(title=chapter_json['title'], file_name=f"chapter_{chapter_json['order_no']}.xhtml", lang='hr')
     chapter.content = f"<h2>{chapter_json['title']}</h2>" + chapter_json['content']
@@ -92,7 +98,7 @@ def generate_book_epub(book_json_or_file):
   epub.write_epub(epub_file, book, {})
   return epub_file
 
-def generate_book_pdf(book_json_or_file):
+def generate_book_pdf(book_json_or_file, cover_img_file=False):
   if not is_installed("wkhtmltopdf"):
     log.warning(f"wkhtmltopdf needs to be installed and added to PATH to generate pdf files")
     return
@@ -108,14 +114,14 @@ def generate_book_pdf(book_json_or_file):
   # generates the html file if it doesn't already exists
   html_file = os.path.join(get_book_pretty_filepath(book_json), get_book_pretty_filename(book_json, ".html"))
   if not os.path.exists(html_file):
-    generate_book_html(book_json_or_file)
+    generate_book_html(book_json_or_file, cover_img_file)
 
   log.debug(f"Generating .pdf for {book_json['slug']}")
   pdf_command = f"wkhtmltopdf --quiet \"{html_file}\" \"{pdf_file}\""
   os.system(pdf_command)
   return pdf_file
 
-def combine_audio(book_json, files, keep_blinks=False):
+def combine_audio(book_json, files, keep_blinks=False, cover_img_file=False):
   if not is_installed("ffmpeg"):
     log.warning(f"ffmpeg needs to be installed and added to PATH to combine audio files")
     return
@@ -144,7 +150,17 @@ def combine_audio(book_json, files, keep_blinks=False):
   silent = "-nostats -loglevel 0 -y"
   concat_command = f"ffmpeg {silent} -f concat -safe 0 -i \"{files_list}\" -c copy \"{combined_audio_file}\""
   os.system(concat_command)
-  tag_command = f"ffmpeg {silent} -i \"{combined_audio_file}\" -c copy -metadata title=\"{book_json['title']}\" -metadata artist=\"{book_json['author']}\" \"{tagged_audio_file}\""
+  if (cover_img_file):
+    cover_embed = f'-i "{cover_img_file}" -map 0 -map 1 -disposition:v:0 attached_pic'
+  else:
+    cover_embed = ""
+  title_metadata = f"-metadata title=\"{book_json['title']}\""
+  author_metadata = f"-metadata artist=\"{book_json['author']}\""
+  category_metadata = f"-metadata album=\"{book_json['category']}\""
+  genre_metadata = '-metadata genre="Blinkist"'
+  tag_command = f'ffmpeg {silent} -i "{combined_audio_file}" {cover_embed} -c copy '
+  tag_command += f'{title_metadata} {author_metadata} {category_metadata} {genre_metadata}'
+  tag_command += f' "{tagged_audio_file}"'
   os.system(tag_command)
 
   # clean up files

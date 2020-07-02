@@ -83,6 +83,10 @@ def main():
                       help="Generate a formatted epub document for the book")
   parser.add_argument("--create-pdf", action="store_true", default=False, 
                       help="Generate a formatted pdf document for the book. Requires wkhtmltopdf")
+  parser.add_argument("--save-cover", action="store_true", default=False,
+                      help="Save a copy of the Blink cover artwork in the folder")
+  parser.add_argument("--embed-cover-art", action="store_true", default=False,
+                      help="Embed the Blink cover artwork into the concatenated audio file (works with '--concat-audio' only)")
   parser.add_argument("--chromedriver", help='Path to a specific chromedriver executable instead of the built-in one')
   parser.add_argument("-v", "--verbose", action="store_true", help="Increases logging verbosity")
 
@@ -125,23 +129,38 @@ def main():
   except ModuleNotFoundError as identifier:
     pass
 
-  def generate_book_outputs(book_json):
+  def generate_book_outputs(book_json, cover_img=False):
     if (args.create_html):
-      generator.generate_book_html(book_json)
+      generator.generate_book_html(book_json, cover_img)
     if (args.create_epub):
       generator.generate_book_epub(book_json)
     if (args.create_pdf):
-      generator.generate_book_pdf(book_json)
+      generator.generate_book_pdf(book_json, cover_img)
 
   def scrape_book(driver, processed_books, book_url, category, match_language):
     book_json, dump_exists = scraper.scrape_book_data(driver, book_url, category=category, match_language=match_language)
     if (book_json):
+      cover_img_file = False
+      cover_tmp_file = False
+      if (args.embed_cover_art):
+        cover_tmp_file = scraper.download_book_cover_image(book_json, filename='_cover.jpg',  alt_file='cover.jpg')
+      if (args.save_cover):
+        cover_img_file = scraper.download_book_cover_image(book_json, filename='cover.jpg',  alt_file='_cover.jpg')
       if (args.audio):
         if (not scraped_audio_exists(book_json)):
           audio_files = scraper.scrape_book_audio(driver, book_json, args.language)
           if (audio_files and args.concat_audio):
-            generator.combine_audio(book_json, audio_files, args.keep_noncat)
-      generate_book_outputs(book_json)
+            generator.combine_audio(book_json, audio_files, args.keep_noncat, cover_tmp_file)
+      if (args.save_cover):
+        generate_book_outputs(book_json, cover_img='cover.jpg')
+      else:
+        generate_book_outputs(book_json)
+      if cover_tmp_file:
+        if (os.path.exists(cover_tmp_file)):
+          log.debug(f'Deleting {cover_tmp_file}')
+          os.remove(cover_tmp_file)
+        else:
+          log.debug(f'Could not find "{cover_tmp_file}"')
       processed_books += 1
     return dump_exists
 
