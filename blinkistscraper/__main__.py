@@ -27,6 +27,7 @@ def scraped_audio_exists(book_json):
     if ((len(existing_audio_files) == chapter_count)): 
       # all audio blinks for the book have already been downloaded
       log.debug(f"Audio for all {chapter_count} blinks already exists")
+      return existing_audio_files;
     else:
       if (len(existing_audio_files) > 0): 
         log.debug(f"Found audio files for {len(existing_audio_files)} out of {chapter_count} blinks")
@@ -142,16 +143,17 @@ def main():
     if (book_json):
       cover_img_file = False
       cover_tmp_file = False
-      if (args.embed_cover_art):
-        cover_tmp_file = scraper.download_book_cover_image(book_json, filename='_cover.jpg',  alt_file='cover.jpg')
-      if (args.save_cover):
-        cover_img_file = scraper.download_book_cover_image(book_json, filename='cover.jpg',  alt_file='_cover.jpg')
       if (args.audio):
-        if (not scraped_audio_exists(book_json)):
+        audio_files = scraped_audio_exists(book_json)
+        if (not audio_files):
           audio_files = scraper.scrape_book_audio(driver, book_json, args.language)
-          if (audio_files and args.concat_audio):
+        if (audio_files and args.concat_audio):
+          if (type(audio_files) == list):
+            if (args.embed_cover_art):
+              cover_tmp_file = scraper.download_book_cover_image(book_json, filename='_cover.jpg',  alt_file='cover.jpg')
             generator.combine_audio(book_json, audio_files, args.keep_noncat, cover_tmp_file)
       if (args.save_cover):
+        cover_img_file = scraper.download_book_cover_image(book_json, filename='cover.jpg',  alt_file='_cover.jpg')
         generate_book_outputs(book_json, cover_img='cover.jpg')
       else:
         generate_book_outputs(book_json)
