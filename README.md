@@ -46,7 +46,8 @@ optional arguments:
   --keep-noncat         Keep the individual blink audio files, instead of
                         deleting them (works with '--concat-audio' only)
   --no-scrape           Don't scrape the website, only process existing json
-                        files in the dump folder
+                        files in the dump folder. Do not provide email or 
+                        password with this option.
   --book BOOK           Scrapes this book only, takes the blinkist url for the
                         book(e.g. https://www.blinkist.com/en/books/... or
                         https://www.blinkist.com/en/nc/reader/...)
@@ -102,7 +103,7 @@ The script download audio blinks as well. This is done by waiting for a request 
 Add the `--concat-audio` argument to the script to concatenate the individual audio blinks into a single file and tag it with the appropriate book title and author. Doing this will delete all individual blinks and replace them with one audio file (per book), only. To keep both the individual blink audio files, also, use the `--keep-noncat` argument together with the `--concat-audio` argument (i.e. `--concat-audio --keep-noncat`). This requires the [ffmpeg](https://www.ffmpeg.org/) tool to be installed and present in the PATH.
 
 ## Processing book dumps with no scraping
-During scraping, the script saves all book's metadata in json files inside the `dump` folder. Those can be used by the script to re-generate the .html, .epub and .pdf output files without having to scrape the website again. To do so, pass the `--no-scrape` argument to the script.
+During scraping, the script saves all book's metadata in json files inside the `dump` folder. Those can be used by the script to re-generate the .html, .epub and .pdf output files without having to scrape the website again. To do so, pass the `--no-scrape` argument to the script without providing an email or a password.
 
 # Quirks & known Bugs
 - Some people have had troubles when dealing with long generated book files (> 260 characters in Windows). Although this should be handled gracefully by the script, if you keep seeing "FileNotFoundError" when trying to create the .html / .m4a files, try and turn on long filenames support on your system: https://www.itprotoday.com/windows-10/enable-long-file-name-support-windows-10, and make sure you have a recent distribution of ffmpeg if using it (old versions had some bugs in dealing with long filenames)

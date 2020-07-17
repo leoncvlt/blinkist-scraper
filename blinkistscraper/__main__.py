@@ -60,7 +60,7 @@ def main():
   parser.add_argument("--keep-noncat", action="store_true", default=False,
                       help="Keep the individual blink audio files, instead of deleting them (works with '--concat-audio' only")
   parser.add_argument("--no-scrape", action="store_true", default=False, 
-                      help="Don't scrape the website, only process existing json files in the dump folder")
+                      help="Don't scrape the website, only process existing json files in the dump folder. Do not provide email or password with this option.")
   parser.add_argument("--book", default=False, 
                       help="Scrapes this book only, takes the blinkist url for the book"
                       "(e.g. https://www.blinkist.com/en/books/... or https://www.blinkist.com/en/nc/reader/...)")
