@@ -38,8 +38,7 @@ def scraped_audio_exists(book_json):
 
 def main():
   parser = argparse.ArgumentParser(description="Scrape blinkist.com and generate pretty output")
-  parser.add_argument("email", help="The email to log into your premium Blinkist account")
-  parser.add_argument("password", help="The password to log into your premium Blinkist account")
+
   parser.add_argument("--language", choices={"en", "de"}, default="en", 
                       help="The language to scrape books in - either 'en' for english or 'de' for german")
   parser.add_argument("--match-language", action="store_true", default=False, 
@@ -90,6 +89,10 @@ def main():
                       help="Embed the Blink cover artwork into the concatenated audio file (works with '--concat-audio' only)")
   parser.add_argument("--chromedriver", help='Path to a specific chromedriver executable instead of the built-in one')
   parser.add_argument("-v", "--verbose", action="store_true", help="Increases logging verbosity")
+
+  if '--no-scrape' not in sys.argv:
+    parser.add_argument("email", help="The email to log into your premium Blinkist account")
+    parser.add_argument("password", help="The password to log into your premium Blinkist account")
 
   args = parser.parse_args()
 
