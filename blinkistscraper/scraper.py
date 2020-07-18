@@ -127,7 +127,25 @@ def get_categories(driver, language, specified_categories=None, ignored_categori
   url_with_categories = f'https://www.blinkist.com/{language}/nc/login'
   driver.get(url_with_categories)
   categories_links = []
-  categories_list = driver.find_element_by_class_name("category-list")
+
+  # click the discover dropdown to reveal categories links
+  try:
+    categories_menu = driver.find_element_by_class_name("header-menu__trigger")
+    categories_menu.click()
+  except NoSuchElementException:
+    log.warning(f"Could not find categories dropdown element")
+
+  # find the categories links container
+  categories_list = None
+  categories_elements = ["discover-menu__categories", "category-list"]
+  for classname in categories_elements:
+    try:
+      categories_list = driver.find_element_by_class_name(classname)
+      break;
+    except:
+      log.warning(f"Could not find categories container element with class name '{classname}'")
+
+  # parse the invidual category links
   categories_items = categories_list.find_elements_by_tag_name("li")
   for item in categories_items:
     link = item.find_element_by_tag_name('a')
