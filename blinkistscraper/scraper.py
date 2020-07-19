@@ -209,17 +209,40 @@ def scrape_book_data(driver, book_url, match_language="", category={ "label" : "
   book['title'] = sanitize_name(book['title'])
   book['author'] = sanitize_name(book['author'])
 
-  # scrape the chapter's content on the reader page
-  # and extend the book json data by inserting the scraped content
-  # in the appropriate chapter section to get a complete data file
-  book_chapters = driver.find_elements(By.CSS_SELECTOR, ".chapter.chapter");
-  for chapter in book_chapters:
-    chapter_no = chapter.get_attribute('data-chapterno')
-    chapter_content = chapter.find_element_by_class_name("chapter__content")
-    for chapter_json in book['chapters']:
-      if chapter_json['order_no'] == int(chapter_no):
-        chapter_json['content'] = chapter_content.get_attribute('innerHTML')
-        break
+  # check if the book's metadata already has chapter content
+  # (this is the case for the free book of the day)
+  json_needs_content = False;
+  for chapter_json in book['chapters']:
+    if not "text" in chapter_json:
+      json_needs_content = True
+      break;
+    else:
+      # change the text content key name for compatibility with the script methods
+      chapter_json['content'] = chapter_json.pop('text')
+
+  if json_needs_content:
+    # scrape the chapter's content on the reader page
+    # and extend the book json data by inserting the scraped content
+    # in the appropriate chapter section to get a complete data file
+    book_chapters = driver.find_elements(By.CSS_SELECTOR, ".chapter.chapter");
+    for chapter in book_chapters:
+      chapter_no = chapter.get_attribute('data-chapterno')
+      chapter_content = chapter.find_element_by_class_name("chapter__content")
+      for chapter_json in book['chapters']:
+        if chapter_json['order_no'] == int(chapter_no):
+          chapter_json['content'] = chapter_content.get_attribute('innerHTML')
+          break
+
+    # look for any supplement sections
+    book_supplements = driver.find_elements(By.CSS_SELECTOR, ".chapter.supplement");
+    for supplement in book_supplements:
+      chapter_no = supplement.get_attribute('data-chapterno')
+      supplement_content = chapter.find_element_by_class_name("chapter__content")
+      for chapter_json in book['chapters']:
+        if chapter_json['order_no'] == int(chapter_no):
+          if not chapter_json.get("supplement", None):
+            chapter_json['supplement'] = supplement_content.get_attribute('innerHTML')
+          break
 
   # if we are scraping by category, add it to the book metadata
   book['category'] = category['label']

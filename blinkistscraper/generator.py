@@ -37,10 +37,10 @@ def generate_book_html(book_json_or_file, cover_img_file=False):
     for chapter_json in book_json['chapters']:
       chapter_html = chapter_template
       for chapter_key in chapter_json:
-        if chapter_json[chapter_key]:
-          chapter_html = chapter_html.replace(f'{{{chapter_key}}}', str(chapter_json[chapter_key]))
-        else:
-          chapter_html = chapter_html.replace(f'{{{chapter_key}}}', "")
+        # sanitize null keys (e.g. supplement)
+        if not chapter_json[chapter_key]:
+          chapter_json[chapter_key] = ""
+        chapter_html = chapter_html.replace(f'{{{chapter_key}}}', str(chapter_json[chapter_key]))
       chapters_html.append(chapter_html)
 
   book_html = book_html.replace('{__chapters__}', "\n".join(chapters_html))
@@ -77,10 +77,12 @@ def generate_book_epub(book_json_or_file):
   for chapter_json in book_json['chapters']:
     chapter = epub.EpubHtml(title=chapter_json['title'], file_name=f"chapter_{chapter_json['order_no']}.xhtml", lang='hr')
 
-    if chapter_json['supplement']:
-      chapter.content = f"<h2>{chapter_json['title']}</h2>" + chapter_json['text'] + chapter_json['supplement']
-    else:
-      chapter.content = f"<h2>{chapter_json['title']}</h2>" + chapter_json['text']
+    title = chapter_json.get("title")
+    content = chapter_json.get("content")
+    supplement = chapter_json.get("supplement") or ""
+
+    chapter.content = f"<h2>{title}</h2>" + content + supplement
+
     book.add_item(chapter)
     chapters.append(chapter)
 
