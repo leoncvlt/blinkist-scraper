@@ -38,8 +38,7 @@ def scraped_audio_exists(book_json):
 
 def main():
   parser = argparse.ArgumentParser(description="Scrape blinkist.com and generate pretty output")
-  parser.add_argument("email", help="The email to log into your premium Blinkist account")
-  parser.add_argument("password", help="The password to log into your premium Blinkist account")
+
   parser.add_argument("--language", choices={"en", "de"}, default="en", 
                       help="The language to scrape books in - either 'en' for english or 'de' for german")
   parser.add_argument("--match-language", action="store_true", default=False, 
@@ -61,7 +60,7 @@ def main():
   parser.add_argument("--keep-noncat", action="store_true", default=False,
                       help="Keep the individual blink audio files, instead of deleting them (works with '--concat-audio' only")
   parser.add_argument("--no-scrape", action="store_true", default=False, 
-                      help="Don't scrape the website, only process existing json files in the dump folder")
+                      help="Don't scrape the website, only process existing json files in the dump folder. Do not provide email or password with this option.")
   parser.add_argument("--book", default=False, 
                       help="Scrapes this book only, takes the blinkist url for the book"
                       "(e.g. https://www.blinkist.com/en/books/... or https://www.blinkist.com/en/nc/reader/...)")
@@ -90,6 +89,10 @@ def main():
                       help="Embed the Blink cover artwork into the concatenated audio file (works with '--concat-audio' only)")
   parser.add_argument("--chromedriver", help='Path to a specific chromedriver executable instead of the built-in one')
   parser.add_argument("-v", "--verbose", action="store_true", help="Increases logging verbosity")
+
+  if '--no-scrape' not in sys.argv:
+    parser.add_argument("email", help="The email to log into your premium Blinkist account")
+    parser.add_argument("password", help="The password to log into your premium Blinkist account")
 
   args = parser.parse_args()
 
