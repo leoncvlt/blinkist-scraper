@@ -64,6 +64,7 @@ def main():
   parser.add_argument("--book", default=False, 
                       help="Scrapes this book only, takes the blinkist url for the book"
                       "(e.g. https://www.blinkist.com/en/books/... or https://www.blinkist.com/en/nc/reader/...)")
+  parser.add_argument("--daily-book", action="store_true", default=False, help="Scrapes the free daily book only.")
   parser.add_argument("--books", default=False, 
                       help="Scrapes the list of books, takes a txt file with the list of blinkist urls for the books"
                       "(e.g. https://www.blinkist.com/en/books/... or https://www.blinkist.com/en/nc/reader/...)")
@@ -203,10 +204,11 @@ def main():
 
     is_logged_in = scraper.login(driver, args.language, args.email, args.password)
     if (is_logged_in):
-      if (args.book):
+      if (args.book or args.daily_book):
         # scrape single book
+        book_url = args.book if not args.daily_book else scraper.get_daily_book_url(driver)
         scrape_book(
-          driver, processed_books, args.book, category={ "label" : args.book_category}, match_language=match_language)     
+          driver, processed_books, book_url, category={ "label" : args.book_category}, match_language=match_language)     
       elif (args.books):
         # scrape list of books
         with open(args.books, 'r') as books_urls:

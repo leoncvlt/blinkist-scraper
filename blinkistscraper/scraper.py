@@ -180,6 +180,14 @@ def get_all_books_for_categories(driver, category):
   log.info(f"Found {len(books_links)} books")
   return books_links;
 
+def get_daily_book_url(driver):
+  driver.get("https://www.blinkist.com/nc/daily")
+  daily_book_url = driver.find_element_by_css_selector(".daily-book__infos a");
+  if (daily_book_url):
+    return daily_book_url.get_attribute('href');
+  else:
+    return ""
+
 def scrape_book_data(driver, book_url, match_language="", category={ "label" : "Uncategorized"}, force=False):
   # check if this book has already been dumped, unless we are forcing scraping
   # if so return the content of the dump, alonside with a flash saying it already existed
