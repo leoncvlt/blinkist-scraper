@@ -48,6 +48,7 @@ optional arguments:
   --no-scrape           Don't scrape the website, only process existing json
                         files in the dump folder. Do not provide email or 
                         password with this option.
+  --daily-book          Scrapes the free daily book only.
   --book BOOK           Scrapes this book only, takes the blinkist url for the
                         book(e.g. https://www.blinkist.com/en/books/... or
                         https://www.blinkist.com/en/nc/reader/...)
@@ -104,6 +105,9 @@ Add the `--concat-audio` argument to the script to concatenate the individual au
 
 ## Processing book dumps with no scraping
 During scraping, the script saves all book's metadata in json files inside the `dump` folder. Those can be used by the script to re-generate the .html, .epub and .pdf output files without having to scrape the website again. To do so, pass the `--no-scrape` argument to the script without providing an email or a password.
+
+## Scraping with a free account
+If you don't have a Blinkist premium account, you can still scrape the free daily book. To do so automatically, pass the `--daily-book` argument - this behaves like scraping a single book.
 
 # Quirks & known Bugs
 - Some people have had troubles when dealing with long generated book files (> 260 characters in Windows). Although this should be handled gracefully by the script, if you keep seeing "FileNotFoundError" when trying to create the .html / .m4a files, try and turn on long filenames support on your system: https://www.itprotoday.com/windows-10/enable-long-file-name-support-windows-10, and make sure you have a recent distribution of ffmpeg if using it (old versions had some bugs in dealing with long filenames)
