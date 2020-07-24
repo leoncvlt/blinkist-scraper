@@ -1,9 +1,10 @@
 import os, json, subprocess, logging
-
-from utils import *
 from ebooklib import epub
 
-log = logging.getLogger(f"loconotion.{__name__}")
+from utils import *
+import logger
+
+log = logger.get(f"blinkistscraper.{__name__}")
 
 def generate_book_html(book_json_or_file, cover_img_file=False):
   book_json = get_or_read_json(book_json_or_file)

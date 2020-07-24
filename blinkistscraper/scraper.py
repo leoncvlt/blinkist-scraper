@@ -11,8 +11,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 
 from utils import *
+import logger
 
-log = logging.getLogger(f"loconotion.{__name__}")
+log = logger.get(f"blinkistscraper.{__name__}")
 
 def has_login_cookies():
   return os.path.exists("cookies.pkl")
