@@ -4,7 +4,9 @@ A python script to download book summaries and audio from [Blinkist](https://www
 
 ## Installation / Requirements
 
-`pip install -r requirements.txt`
+Make sure you're in your virtual environment of choice, then run
+- `poetry install --no-dev` if you have [Poetry](https://python-poetry.org/) installed
+- `pip install -r requirements.txt` otherwise
 
 This script uses [ChromeDriver](chromedriver.chromium.org) to automate the Google Chrome browser - therefore Google Chrome needs to be installed in order to work.
 
@@ -16,11 +18,12 @@ The script will automatically try to download and use the appropriate chromedriv
 usage: blinkistscraper [-h] [--language {en,de}] [--match-language]
                        [--cooldown COOLDOWN] [--headless] [--audio]
                        [--concat-audio] [--keep-noncat] [--no-scrape]
-                       [--book BOOK] [--books BOOKS]
+                       [--book BOOK] [--daily-book] [--books BOOKS]
                        [--book-category BOOK_CATEGORY]
                        [--categories CATEGORIES [CATEGORIES ...]]
                        [--ignore-categories IGNORE_CATEGORIES [IGNORE_CATEGORIES ...]]
                        [--create-html] [--create-epub] [--create-pdf]
+                       [--save-cover] [--embed-cover-art]
                        [--chromedriver CHROMEDRIVER] [-v]
                        email password
 
@@ -41,17 +44,15 @@ optional arguments:
   --audio               Download the audio blinks for each book
   --concat-audio        Concatenate the audio blinks into a single file and
                         tag it. Requires ffmpeg
-  --embed-cover-art     Embed the Blink cover artwork into the concatenated
-                        audio file (works with '--concat-audio' only)
   --keep-noncat         Keep the individual blink audio files, instead of
                         deleting them (works with '--concat-audio' only)
   --no-scrape           Don't scrape the website, only process existing json
-                        files in the dump folder. Do not provide email or 
+                        files in the dump folder. Do not provide email or
                         password with this option.
-  --daily-book          Scrapes the free daily book only.
   --book BOOK           Scrapes this book only, takes the blinkist url for the
                         book(e.g. https://www.blinkist.com/en/books/... or
                         https://www.blinkist.com/en/nc/reader/...)
+  --daily-book          Scrapes the free daily book only.
   --books BOOKS         Scrapes the list of books, takes a txt file with the
                         list of blinkist urls for the books(e.g.
                         https://www.blinkist.com/en/books/... or
@@ -76,8 +77,9 @@ optional arguments:
   --create-epub         Generate a formatted epub document for the book
   --create-pdf          Generate a formatted pdf document for the book.
                         Requires wkhtmltopdf
-  --save-cover          Save a copy of the Blink cover artwork in the folder.
-                        This image is used, also, by the generated HTML file.
+  --save-cover          Save a copy of the Blink cover artwork in the folder
+  --embed-cover-art     Embed the Blink cover artwork into the concatenated
+                        audio file (works with '--concat-audio' only)
   --chromedriver CHROMEDRIVER
                         Path to a specific chromedriver executable instead of
                         the built-in one
