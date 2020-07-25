@@ -92,16 +92,18 @@ def initialize_driver(headless=True, with_ublock=False, chromedriver_path=None):
         driver.execute_script(
             "document.getElementsByClassName('hidden')[0].className = ''", element
         )
-        driver.execute_script("window.scrollTo(0, 2000)")  # scroll down (for debugging)
+        # scroll down (for debugging)
+        driver.execute_script("window.scrollTo(0, 2000)")
         uBlock_settings_file = str(
             os.path.join(os.getcwd(), "bin", "ublock", "ublock-settings.txt")
         )
-        driver.find_element_by_id("restoreFilePicker").send_keys(
-            uBlock_settings_file
-        )  # upload
-        # TODO: wait for alert to appear on screen to make sure we intercept it
-        driver.switch_to.alert.accept()  # click ok on pop up to accept overwrite
-
+        driver.find_element_by_id("restoreFilePicker").send_keys(uBlock_settings_file)
+        try:
+            WebDriverWait(driver, 3).until(EC.alert_is_present())
+            # click ok on pop up to accept overwrite
+            driver.switch_to.alert.accept()
+        except TimeoutException as ex:
+            log.error("Timeout waiting for ublock config overwrite alert")
         # leave uBlock config
         driver.get("about:blank")
 
