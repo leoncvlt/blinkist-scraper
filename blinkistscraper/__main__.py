@@ -251,7 +251,7 @@ def main():
             int(elapsed_time % 3600 // 60),
             int(elapsed_time % 60),
         )
-        log.info(f"Processed {processed_books} books in {formatted_time}")
+        log.info(f"Processed {processed_books} book{'s' if processed_books != 1 else ''} in {formatted_time}")
 
     # start scraping
     log.info("Starting scrape run...")
@@ -286,8 +286,9 @@ def main():
                 book_url = (
                     args.book
                     if not args.daily_book
-                    else scraper.get_daily_book_url(driver)
+                    else scraper.get_daily_book_url(driver, args.language)
                 )
+                processed_books += 1
                 scrape_book(
                     driver,
                     processed_books,
