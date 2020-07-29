@@ -209,8 +209,8 @@ def get_all_books_for_categories(driver, category):
     return books_links
 
 
-def get_daily_book_url(driver):
-    driver.get("https://www.blinkist.com/nc/daily")
+def get_daily_book_url(driver, language):
+    driver.get(f"https://www.blinkist.com/{language}/nc/daily")
     daily_book_url = driver.find_element_by_css_selector(".daily-book__infos a")
     if daily_book_url:
         return daily_book_url.get_attribute("href")
