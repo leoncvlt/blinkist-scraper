@@ -41,7 +41,7 @@ optional arguments:
                         downloading audio files. Can't be smaller than 1
   --headless            Start the automated web browser in headless mode.
                         Works only if you already logged in once
-  --audio               Download the audio blinks for each book
+  --audio               Download the audio blinks for each book.
   --concat-audio        Concatenate the audio blinks into a single file and
                         tag it. Requires ffmpeg
   --keep-noncat         Keep the individual blink audio files, instead of
@@ -100,7 +100,7 @@ The special field `{__chapters__}` is replaced with all the book's chapters. Cha
 Add the `--create-pdf` argument to the script to generate a .pdf file from the .html one. This requires the [wkhtmltopdf](https://wkhtmltopdf.org/) tool to be installed and present in the PATH.
 
 ## Downloading audio
-The script download audio blinks as well. This is done by waiting for a request to the Blinkist's `audio` endpoint in their `library` api for the first chapter's audio blink which is sent as soon as the user navigates to a book's reader page; then re-using the valid request's headers to build additional requests to the rest of the chapter's audio files. The files are downloaded as `.m4a`.
+The script download audio blinks as well when adding the `--audio` argument. This is done by waiting for a request to the Blinkist's `audio` endpoint in their `library` api for the first chapter's audio blink which is sent as soon as the user navigates to a book's reader page; then re-using the valid request's headers to build additional requests to the rest of the chapter's audio files. The files are downloaded as `.m4a`.
 
 ## Concatenating audio files
 Add the `--concat-audio` argument to the script to concatenate the individual audio blinks into a single file and tag it with the appropriate book title and author. Doing this will delete all individual blinks and replace them with one audio file (per book), only. To keep both the individual blink audio files, also, use the `--keep-noncat` argument together with the `--concat-audio` argument (i.e. `--concat-audio --keep-noncat`). This requires the [ffmpeg](https://www.ffmpeg.org/) tool to be installed and present in the PATH.
