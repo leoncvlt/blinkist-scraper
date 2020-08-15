@@ -79,7 +79,7 @@ def main():
     parser.add_argument(
         "--audio",
         action="store_true",
-        default=True,
+        default=False,
         help="Download the audio blinks for each book",
     )
     parser.add_argument(
