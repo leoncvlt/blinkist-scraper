@@ -87,7 +87,7 @@ optional arguments:
 ```
 
 ## Basic usage
-`python main.py email password` where email and password are the login details to your premium Blinkist account.
+`python blinkistscraper email password` where email and password are the login details to your premium Blinkist account.
 
 The script uses Selenium with a Chrome driver to scrape the site. Blinkist uses captchas on login, so the script will wait for the user to solve it and login on first run (although the email and password fields are filled in automatically from the arguments)  - the sessions cookies are stored so the script can be run in headless mode with the appropriate flag afterwards. The output files are stored in the `books` folder, arranged in subfolders by category and by the book's title and author.
 
