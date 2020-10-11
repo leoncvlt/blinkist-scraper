@@ -127,6 +127,13 @@ def login(driver, language, email, password):
         driver.find_element_by_id("login-form_login_email")
     except NoSuchElementException:
         is_logged_in = True
+    # try:
+    #     WebDriverWait(driver, 360).until(
+    #         EC.presence_of_element_located((By.ID, "login-form_login_email"))
+    #     )
+    # except TimeoutException as ex:
+    #     log.error("Error logging in.")
+    #     return False
 
     # if not logged in, autofill the email and password inputs with the provided data
     # the user will still have to solve the captcha and click the log in button afterwards
@@ -207,6 +214,20 @@ def get_all_books_for_categories(driver, category):
         books_links.append(href)
     log.info(f"Found {len(books_links)} books")
     return books_links
+
+
+def get_all_books(driver, language):
+    log.info(f"Getting all Blinkist books from sitemap...")
+    all_books_links = []
+    driver.get("https://www.blinkist.com/en/sitemap")
+    books_items = driver.find_elements_by_css_selector(
+        f".sitemap__section.sitemap__section--books a[href$='{language}']"
+    )
+    for item in books_items:
+        href = item.get_attribute("href")
+        all_books_links.append(href)
+    log.info(f"Found {len(all_books_links)} books")
+    return all_books_links
 
 
 def get_daily_book_url(driver, language):

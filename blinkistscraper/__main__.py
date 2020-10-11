@@ -239,7 +239,7 @@ def main():
                     os.remove(cover_tmp_file)
                 else:
                     log.debug(f'Could not find "{cover_tmp_file}"')
-            processed_books += 1
+            processed_books.append(book_url)
         return dump_exists
 
     def finish(start_time, processed_books, driver=None):
@@ -251,18 +251,21 @@ def main():
             int(elapsed_time % 3600 // 60),
             int(elapsed_time % 60),
         )
-        log.info(f"Processed {processed_books} book{'s' if processed_books != 1 else ''} in {formatted_time}")
+        total_books = len(processed_books)
+        log.info(
+            f"Processed {total_books} book{'s' if total_books != 1 else ''} in {formatted_time}"
+        )
 
     # start scraping
     log.info("Starting scrape run...")
-    processed_books = 0
+    processed_books = []
     start_time = time.time()
 
     if args.no_scrape:
         # if the --no-scrape argument is passed, just process the existing json dump files
         for file in glob.glob(os.path.join(os.getcwd(), "dump", "*.json")):
             generate_book_outputs(file)
-            processed_books += 1
+            processed_books.append(file)
         finish(start_time, processed_books)
     else:
         match_language = args.language if args.match_language else ""
@@ -288,7 +291,6 @@ def main():
                     if not args.daily_book
                     else scraper.get_daily_book_url(driver, args.language)
                 )
-                processed_books += 1
                 scrape_book(
                     driver,
                     processed_books,
@@ -310,7 +312,8 @@ def main():
                         if not dump_exists:
                             time.sleep(args.cooldown)
             else:
-                # scrape all books
+                # scrape all books / categories
+                all_books = scraper.get_all_books(driver, args.language)
                 categories = scraper.get_categories(
                     driver,
                     args.language,
@@ -331,6 +334,20 @@ def main():
                         # no scraping was involved, no need to cooldown
                         if not dump_exists:
                             time.sleep(args.cooldown)
+                uncategorized_books = [x for x in all_books if x not in processed_books]
+                log.info(
+                    f"Scraping {len(uncategorized_books)} remaining uncategorized books..."
+                )
+                for book_url in uncategorized_books:
+                    dump_exists = scrape_book(
+                        driver,
+                        processed_books,
+                        book_url,
+                        category={"label": "Uncategorized"},
+                        match_language=match_language,
+                    )
+                    if not dump_exists:
+                        time.sleep(args.cooldown)
         else:
             log.error("Unable to login into Blinkist")
         finish(start_time, processed_books, driver)
