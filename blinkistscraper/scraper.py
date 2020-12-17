@@ -62,6 +62,8 @@ def initialize_driver(headless=True, with_ublock=False, chromedriver_path=None):
     chrome_options.add_experimental_option("w3c", False)
     # removes the 'DevTools listening' log message
     chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
+    # prevent Cloudflare from detecting ChromeDriver as bot
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
 
     if with_ublock:
         chrome_options.add_extension(
