@@ -62,6 +62,10 @@ def initialize_driver(headless=True, with_ublock=False, chromedriver_path=None):
     chrome_options.add_experimental_option("w3c", False)
     # removes the 'DevTools listening' log message
     chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
+    # prevent Cloudflare from detecting ChromeDriver as bot
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    chrome_options.add_experimental_option("useAutomationExtension", False)
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
 
     if with_ublock:
         chrome_options.add_extension(
@@ -79,6 +83,23 @@ def initialize_driver(headless=True, with_ublock=False, chromedriver_path=None):
         # (https://github.com/wkeeling/selenium-wire/issues/55)
         # seleniumwire_options={"verify_ssl": False},
         options=chrome_options,
+    )
+
+    driver.execute_cdp_cmd(
+        "Network.setUserAgentOverride",
+        {
+            "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"
+        },
+    )
+    driver.execute_cdp_cmd(
+        "Page.addScriptToEvaluateOnNewDocument",
+        {
+            "source": """
+            Object.defineProperty(navigator, 'webdriver', {
+            get: () => undefined
+            })
+        """
+        },
     )
 
     if with_ublock:
@@ -356,14 +377,23 @@ def scrape_book_audio(driver, book_json, language):
 
     audio_files = []
     error = False
+
+    # using requests instead of urllib.request to fetch the audio seems to trigger Cloudflare's captcha
+    # see https://stackoverflow.com/questions/62684468/pythons-requests-triggers-cloudflares-security-while-urllib-does-not
+    import urllib.request, json, gzip
+
     # go through every chapter object in the book json data
     # and build a request to the audio endpoint using the book and chapter ID
     for chapter_json in book_json["chapters"]:
         time.sleep(1.0)
         api_url = f"https://www.blinkist.com/api/books/{book_json['id']}/chapters/{chapter_json['id']}/audio"
+        log.debug(f"Fetching blink audio from: {api_url}")
         try:
-            audio_request = requests.get(api_url, headers=audio_request_headers)
-            audio_request_json = audio_request.json()
+            audio_request = urllib.request.Request(api_url, headers=audio_request_headers)
+            audio_request_content = urllib.request.urlopen(audio_request).read()
+            audio_request_json = json.loads(
+                gzip.decompress(audio_request_content).decode("utf-8")
+            )
             if "url" in audio_request_json:
                 audio_url = audio_request_json["url"]
                 audio_file = download_book_chapter_audio(
