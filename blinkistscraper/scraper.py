@@ -1,10 +1,8 @@
-import os, time, requests, subprocess, argparse, json, pickle, html, argparse, time, re, sys, platform
+import os, time, requests, json, pickle, sys
 from shutil import copyfile as copy_file
-from datetime import datetime
 
 import chromedriver_autoinstaller
 from seleniumwire import webdriver
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
@@ -123,7 +121,7 @@ def initialize_driver(headless=True, with_ublock=False, chromedriver_path=None):
             WebDriverWait(driver, 3).until(EC.alert_is_present())
             # click ok on pop up to accept overwrite
             driver.switch_to.alert.accept()
-        except TimeoutException as ex:
+        except TimeoutException:
             log.error("Timeout waiting for ublock config overwrite alert")
         # leave uBlock config
         driver.get("about:blank")
@@ -166,10 +164,12 @@ def login(driver, language, email, password):
 
     try:
         WebDriverWait(driver, 360).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "main-banner-headline-v2"))
+            EC.presence_of_element_located(
+                (By.CLASS_NAME, "main-banner-headline-v2")
+            )
         )
     except TimeoutException as ex:
-        log.error("Error logging in.")
+        log.error("Error logging in.", ex)
         return False
 
     # login successful, store login cookies for future operations
@@ -187,7 +187,7 @@ def get_categories(driver, language, specified_categories=None, ignored_categori
         categories_menu = driver.find_element_by_class_name("header-menu__trigger")
         categories_menu.click()
     except NoSuchElementException:
-        log.warning(f"Could not find categories dropdown element")
+        log.warning("Could not find categories dropdown element")
 
     # find the categories links container
     categories_list = None
@@ -272,7 +272,7 @@ def scrape_book_data(
 
     # if not, proceed scraping the reader page
     log.info(f"Scraping book at {book_url}")
-    if not "/nc/reader/" in book_url:
+    if "/nc/reader/" not in book_url:
         book_url = book_url.replace("/books/", "/nc/reader/")
     if not driver.current_url == book_url:
         driver.get(book_url)
@@ -372,7 +372,9 @@ def scrape_book_audio(driver, book_json, language):
         captured_request = driver.wait_for_request("audio", timeout=30)
         audio_request_headers = captured_request.headers
     except TimeoutException as ex:
-        log.error("Could not capture an audio endpoint request")
+        log.error(
+            "Could not capture an audio endpoint request", '\n',
+            "Error:", ex)
         return False
 
     audio_files = []
@@ -442,20 +444,24 @@ def download_book_chapter_audio(book_json, chapter_no, audio_url):
 
 
 def download_book_cover_image(
-    book_json, filename="_cover.jpg", size="640", type="1_1", alt_file="cover.jpg"
+    book_json, filename="_cover.jpg", size="640", type="1_1",
+    alt_file="cover.jpg"
 ):
-    """ 
+    """
     Downloads the cover image specified in 'book_json'.
-    
-    book_json -- dictionary object with book metadata. 
+
+    book_json -- dictionary object with book metadata.
     filename -- filename of the output files
-    size -- the width of the image in pixels. 
-            The 'sizes' options (generally) are: 130, 250, 470, 640, 1080, and 1400.
-    type -- the aspect ratio of for the cover image. 
+    size -- the width of the image in pixels.
+            The 'sizes' options (generally) are: 130, 250, 470, 640, 1080,
+            and 1400.
+    type -- the aspect ratio of for the cover image.
             The 'types' options (generally) are: '1_1', '2-2_1', and '3_4'.
-    alt_file -- an identical file to the expected image, but with a different name.
-    
-    The default 'image_url' (used by the HTML output) is type: '3_4', size: 640.
+    alt_file -- an identical file to the expected image, but with a
+    different name.
+
+    The default 'image_url' (used by the HTML output) is type: '3_4',
+    size: 640.
     """
 
     # default cover image:
