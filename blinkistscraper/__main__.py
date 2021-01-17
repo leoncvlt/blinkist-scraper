@@ -4,7 +4,7 @@ import scraper
 import generator
 import logger
 
-log = logger.get(f"blinkistscraper")
+log = logger.get("blinkistscraper")
 
 
 def scraped_audio_exists(book_json):
@@ -221,16 +221,18 @@ def main():
                     if type(audio_files) == list:
                         if args.embed_cover_art:
                             cover_tmp_file = scraper.download_book_cover_image(
-                                book_json, filename="_cover.jpg", alt_file="cover.jpg"
+                                book_json, filename="_cover.jpg",
+                                alt_file="cover.jpg"
                             )
                         generator.combine_audio(
-                            book_json, audio_files, args.keep_noncat, cover_tmp_file
+                            book_json, audio_files, args.keep_noncat,
+                            cover_tmp_file
                         )
             if args.save_cover:
                 cover_img_file = scraper.download_book_cover_image(
                     book_json, filename="cover.jpg", alt_file="_cover.jpg"
                 )
-                generate_book_outputs(book_json, cover_img="cover.jpg")
+                generate_book_outputs(book_json, cover_img=cover_img_file)
             else:
                 generate_book_outputs(book_json)
             if cover_tmp_file:
@@ -262,7 +264,8 @@ def main():
     start_time = time.time()
 
     if args.no_scrape:
-        # if the --no-scrape argument is passed, just process the existing json dump files
+        # if the --no-scrape argument is passed, just process the
+        # existing json dump files
         for file in glob.glob(os.path.join(os.getcwd(), "dump", "*.json")):
             generate_book_outputs(file)
             processed_books.append(file)
@@ -282,7 +285,8 @@ def main():
             chromedriver_path=args.chromedriver,
         )
 
-        is_logged_in = scraper.login(driver, args.language, args.email, args.password)
+        is_logged_in = scraper.login(
+            driver, args.language, args.email, args.password)
         if is_logged_in:
             if args.book or args.daily_book:
                 # scrape single book
