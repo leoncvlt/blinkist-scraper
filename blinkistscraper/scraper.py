@@ -188,6 +188,17 @@ def get_categories(driver, language, specified_categories=None, ignored_categori
     driver.get(url_with_categories)
     categories_links = []
 
+    # a lot of things fail if the page is not ready...
+    try:
+        WebDriverWait(driver, 360).until(
+            EC.presence_of_element_located(
+                (By.CLASS_NAME, "main-banner-headline-v2")
+            )
+        )
+    except TimeoutException as ex:
+        log.error("Error loading page. Error: " + str(ex))
+        # return False
+
     # click the discover dropdown to reveal categories links
     try:
         categories_menu = driver.find_element_by_class_name("header-menu__trigger")
@@ -227,7 +238,9 @@ def get_categories(driver, language, specified_categories=None, ignored_categori
 
         category = {"label": " ".join(label.split()).replace("&amp;", "&"), "url": href}
         categories_links.append(category)
-    log.info(f"Scraping for categories: {[ c['label'] for c in categories_links ]}")
+    log.info(
+        f"Scraping categories: {', '.join([c['label'] for c in categories_links])}"
+    )
     return categories_links
 
 
@@ -266,6 +279,18 @@ def get_daily_book_url(driver, language):
         return ""
 
 
+def detect_needs_upgrade(driver):
+    # check for re-direct to the upgrade page
+    if driver.current_url.endswith('/nc/plans'):
+        # needs subscription
+        log.warn('Book is not available on the selected account. Exiting...')
+        driver.close()
+        log.info('Go Premium and get the best of Blinkist: '
+                 + 'https://www.blinkist.com/nc/plans')
+        # exit the scraper
+        exit()
+
+
 def scrape_book_data(
     driver, book_url, match_language="", category={"label": "Uncategorized"}, force=False
 ):
@@ -280,8 +305,13 @@ def scrape_book_data(
     log.info(f"Scraping book at {book_url}")
     if "/nc/reader/" not in book_url:
         book_url = book_url.replace("/books/", "/nc/reader/")
+
     if not driver.current_url == book_url:
         driver.get(book_url)
+
+    # check for re-direct to the upgrade page
+    detect_needs_upgrade(driver)
+
     reader = driver.find_element_by_class_name("reader__container")
 
     # get the book's metadata from the blinkist API using its ID
@@ -370,7 +400,16 @@ def scrape_book_audio(driver, book_json, language):
 
     # navigate to the book's reader page which also contains the media player for the first audio blink
     book_reader_url = f'https://www.blinkist.com/{language}/nc/reader/{book_json["slug"]}'
-    driver.get(book_reader_url)
+
+    # check if the url needs to change
+    if not driver.current_url == book_reader_url:
+        log.info(f"Scraping book audio at {book_reader_url}")
+        driver.get(book_reader_url)
+    else:
+        log.info("Scraping book audio.")
+
+    # check for re-direct to the upgrade page
+    detect_needs_upgrade(driver)
 
     # wait until the request to the audio endpoint is captured,
     # then its headers for future requests
@@ -378,9 +417,8 @@ def scrape_book_audio(driver, book_json, language):
         captured_request = driver.wait_for_request("audio", timeout=30)
         audio_request_headers = captured_request.headers
     except TimeoutException as ex:
-        log.error(
-            "Could not capture an audio endpoint request", '\n',
-            "Error:", ex)
+        log.error("Could not capture an audio endpoint request")
+        log.error(str(ex))
         return False
 
     audio_files = []
