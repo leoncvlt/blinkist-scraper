@@ -154,22 +154,28 @@ def login(driver, language, email, password):
     #     log.error("Error logging in.")
     #     return False
 
-    # if not logged in, autofill the email and password inputs with the provided data
-    # the user will still have to solve the captcha and click the log in button afterwards
+    # if not logged in, autofill the email and password inputs with the
+    # provided login credentials
     if not is_logged_in:
-        log.info("Not logged into Blinkist: navigating to sign in page...")
+        log.info("Not logged into Blinkist. Logging in...")
         driver.find_element_by_id("login-form_login_email").send_keys(email)
         driver.find_element_by_id("login-form_login_password").send_keys(password)
-        log.info("Waiting for user to solve recaptcha and log in...")
+        # click the "login" button
+        driver.find_element_by_name("commit").click()
 
     try:
+        log.info("Logged into Blinkist. Loading Library...")
+        # try to avert the captcha page by switching the URL
+        library_url = f"https://www.blinkist.com/{language}/nc/library"
+        if not driver.current_url.rstrip('/') == library_url:
+            driver.get(library_url)
         WebDriverWait(driver, 360).until(
             EC.presence_of_element_located(
                 (By.CLASS_NAME, "main-banner-headline-v2")
             )
         )
     except TimeoutException as ex:
-        log.error("Error logging in.", ex)
+        log.error("Error logging in. Error:", ex)
         return False
 
     # login successful, store login cookies for future operations
