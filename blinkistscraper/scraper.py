@@ -232,7 +232,9 @@ def get_categories(driver, language, specified_categories=None, ignored_categori
 
         category = {"label": " ".join(label.split()).replace("&amp;", "&"), "url": href}
         categories_links.append(category)
-    log.info(f"Scraping for categories: {[ c['label'] for c in categories_links ]}")
+    log.info(
+        f"Scraping categories: {', '.join([c['label'] for c in categories_links])}"
+    )
     return categories_links
 
 
