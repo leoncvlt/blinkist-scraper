@@ -272,13 +272,9 @@ def main():
         finish(start_time, processed_books)
     else:
         match_language = args.language if args.match_language else ""
-        # if no login cookies were found, don't start a headless browser
-        # so that the user can solve recaptcha and log in
         start_headless = args.headless
-        if not scraper.has_login_cookies():
-            start_headless = False
-        # add uBlock (if the conditions are right)
-        use_ublock = not (args.book or args.headless)
+        # add uBlock (except on headless)
+        use_ublock = not args.headless
         driver = scraper.initialize_driver(
             headless=start_headless,
             with_ublock=use_ublock,
