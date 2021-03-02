@@ -401,12 +401,8 @@ def scrape_book_audio(driver, book_json, language):
     # navigate to the book's reader page which also contains the media player for the first audio blink
     book_reader_url = f'https://www.blinkist.com/{language}/nc/reader/{book_json["slug"]}'
 
-    # check if the url needs to change
-    if not driver.current_url == book_reader_url:
-        log.info(f"Scraping book audio at {book_reader_url}")
-        driver.get(book_reader_url)
-    else:
-        log.info("Scraping book audio.")
+    log.info(f"Scraping book audio at {book_reader_url}")
+    driver.get(book_reader_url)
 
     # check for re-direct to the upgrade page
     detect_needs_upgrade(driver)
