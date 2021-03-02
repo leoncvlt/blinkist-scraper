@@ -313,7 +313,7 @@ def main():
                             time.sleep(args.cooldown)
             else:
                 # scrape all books / categories
-                all_books = scraper.get_all_books(driver, args.language)
+                all_books = scraper.get_all_books(driver, match_language)
                 categories = scraper.get_categories(
                     driver,
                     args.language,
