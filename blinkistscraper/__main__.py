@@ -312,8 +312,7 @@ def main():
                         if not dump_exists:
                             time.sleep(args.cooldown)
             else:
-                # scrape all books / categories
-                all_books = scraper.get_all_books(driver, match_language)
+                # scrape all categories
                 categories = scraper.get_categories(
                     driver,
                     args.language,
@@ -334,6 +333,8 @@ def main():
                         # no scraping was involved, no need to cooldown
                         if not dump_exists:
                             time.sleep(args.cooldown)
+                # scrape all books to process uncategorized books
+                all_books = scraper.get_all_books(driver, match_language)
                 uncategorized_books = [x for x in all_books if x not in processed_books]
                 log.info(
                     f"Scraping {len(uncategorized_books)} remaining uncategorized books..."
