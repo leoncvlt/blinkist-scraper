@@ -183,7 +183,7 @@ def main():
         "--no-ublock",
         action="store_true",
         default=False,
-        help="Disable the uBlock Chrome extension",
+        help="Disable the uBlock Chrome extension. Might be needed to solve captcha",
     )
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="Increases logging verbosity"
