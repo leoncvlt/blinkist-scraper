@@ -156,7 +156,7 @@ def login(driver, language, email, password):
             )
         )
     except TimeoutException as ex:
-        log.ERROR("Error. Captcha needs to be solved within 1 minute")
+        log.error("Error. Captcha needs to be solved within 1 minute")
         return False
 
     # navigate to the login page
