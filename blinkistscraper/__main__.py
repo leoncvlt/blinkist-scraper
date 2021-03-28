@@ -186,6 +186,13 @@ def main():
         help="Disable the uBlock Chrome extension. Might be needed to solve captcha",
     )
     parser.add_argument(
+        "--no-sandbox",
+        action="store_true",
+        default=False,
+        help="When running as root (e.g. in Docker), Chrome requires the '--no-sandbox' argument",
+    )
+
+    parser.add_argument(
         "-v", "--verbose", action="store_true", help="Increases logging verbosity"
     )
 
@@ -284,6 +291,7 @@ def main():
         driver = scraper.initialize_driver(
             headless=start_headless,
             with_ublock=use_ublock,
+            no_sandbox=args.no_sandbox,
             chromedriver_path=args.chromedriver,
         )
 

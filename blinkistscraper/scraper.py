@@ -35,7 +35,7 @@ def store_login_cookies(driver):
     pickle.dump(driver.get_cookies(), open("cookies.pkl", "wb"))
 
 
-def initialize_driver(headless=True, with_ublock=False, chromedriver_path=None):
+def initialize_driver(headless=True, with_ublock=False, no_sandbox=False, chromedriver_path=None):
     if not chromedriver_path:
         try:
             chromedriver_path = chromedriver_autoinstaller.install()
@@ -56,6 +56,8 @@ def initialize_driver(headless=True, with_ublock=False, chromedriver_path=None):
     chrome_options.add_argument("--log-level=3")
     chrome_options.add_argument("--silent")
     chrome_options.add_argument("--disable-logging")
+    if no_sandbox:
+        chrome_options.add_argument("--no-sandbox")
     # allows selenium to accept cookies with a non-int64 'expiry' value
     chrome_options.add_experimental_option("w3c", False)
     # removes the 'DevTools listening' log message
