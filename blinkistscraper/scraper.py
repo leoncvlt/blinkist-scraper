@@ -244,7 +244,7 @@ def get_categories(driver, language, specified_categories=None, ignored_categori
 
     # parse the invidual category links
     categories_items = categories_list.find_elements_by_tag_name("li")
-    for item in categories_items:
+    for id, item in enumerate(categories_items):
         link = item.find_element_by_tag_name("a")
         href = link.get_attribute("href")
         label = link.find_element_by_tag_name("span").get_attribute("innerHTML")
@@ -260,7 +260,7 @@ def get_categories(driver, language, specified_categories=None, ignored_categori
         if list(filter(lambda ic: ic.lower() in label.lower(), ignored_categories)):
             continue
 
-        category = {"label": " ".join(label.split()).replace("&amp;", "&"), "url": href}
+        category = {"label": " ".join(label.split()).replace("&amp;", "&"), "url": href, 'id':id}
         categories_links.append(category)
     log.info(
         f"Scraping categories: {', '.join([c['label'] for c in categories_links])}"
@@ -321,22 +321,23 @@ def detect_needs_upgrade(driver):
 
 
 def scrape_book_data(
-    driver, book_url, match_language="", category={"label": "Uncategorized"}, force=False
+    driver, url, get_amazon_url, match_language="", category={"label": "Uncategorized", "id":-1}, force=False
 ):
     # check if this book has already been dumped, unless we are forcing scraping
     # if so return the content of the dump, alonside with a flash saying it already existed
-    if os.path.exists(get_book_dump_filename(book_url)) and not force:
-        log.debug(f"Json dump for book {book_url} already exists, skipping scraping...")
-        with open(get_book_dump_filename(book_url)) as f:
+    if os.path.exists(get_book_dump_filename(url)) and not force:
+        log.debug(f"Json dump for book {url} already exists, skipping scraping...")
+        with open(get_book_dump_filename(url)) as f:
             return json.load(f), True
 
     # if not, proceed scraping the reader page
-    log.info(f"Scraping book at {book_url}")
-    if "/nc/reader/" not in book_url:
-        book_url = book_url.replace("/books/", "/nc/reader/")
+    log.info(f"Scraping book at {url}")
+    if "/nc/reader/" not in url:
+        url = url.replace("/books/", "/nc/reader/")
 
-    if not driver.current_url == book_url:
-        driver.get(book_url)
+    # go to /nc/reader/... url, if not already there
+    if not driver.current_url == url:
+        driver.get(url)
 
     # check for re-direct to the upgrade page
     detect_needs_upgrade(driver)
@@ -393,9 +394,21 @@ def scrape_book_data(
                         supplement_text = supplement_content.get_attribute("innerHTML")
                         chapter_json["supplement"] = supplement_text
                     break
+    # if the --get-amazon-url cli-switch is enabled, go to ./books/. page and extract amazon url
+    if get_amazon_url:
+        books_url = url.replace("/nc/reader/", "/books/")
+        driver.get(books_url)
+        time.sleep(1.0) 
+
+        buy_button = driver.find_element_by_class_name("buy-book-button")
+        if buy_button.is_displayed():
+            amazon_url = buy_button.get_attribute("href")
+            book["amazon_id"] = sanitize_amazon_id(amazon_url)
+            print(book["amazon_id"])
 
     # if we are scraping by category, add it to the book metadata
     book["category"] = category["label"]
+    book["category_id"] = category["id"]
 
     # store the book json metadata for future use
     dump_book(book)

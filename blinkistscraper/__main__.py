@@ -101,6 +101,12 @@ def main():
         help="Don't scrape the website, only process existing json files in the dump folder. Do not provide email or password with this option.",
     )
     parser.add_argument(
+        "--get-amazon-url",
+        action="store_true",
+        default=False,
+        help="Get Amazon book link as well. Will additionally scrape .../en/books/... for this",
+    )
+    parser.add_argument(
         "--book",
         default=False,
         help="Scrapes this book only, takes the blinkist url for the book"
@@ -212,7 +218,7 @@ def main():
 
     def scrape_book(driver, processed_books, book_url, category, match_language):
         book_json, dump_exists = scraper.scrape_book_data(
-            driver, book_url, category=category, match_language=match_language
+            driver, book_url, args.get_amazon_url, category=category, match_language=match_language
         )
         if book_json:
             cover_img_file = False
@@ -350,7 +356,7 @@ def main():
                         driver,
                         processed_books,
                         book_url,
-                        category={"label": "Uncategorized"},
+                        category={"label": "Uncategorized", "id": -1},
                         match_language=match_language,
                     )
                     if not dump_exists:
