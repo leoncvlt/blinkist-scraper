@@ -62,7 +62,7 @@
     "wyciwyg-scheme"
   ],
   "netWhitelist": "about-scheme\nchrome-extension-scheme\nchrome-scheme\nmoz-extension-scheme\nopera-scheme\nvivaldi-scheme\nwyciwyg-scheme",
-  "dynamicFilteringString": "behind-the-scene * * noop\nbehind-the-scene * inline-script noop\nbehind-the-scene * 1p-script noop\nbehind-the-scene * 3p-script noop\nbehind-the-scene * 3p-frame noop\nbehind-the-scene * image noop\nbehind-the-scene * 3p noop\n* * 3p block\nwww.blinkist.com blinkist.io * allow\nwww.blinkist.com d17pjsg7x52x9r.cloudfront.net * allow\nwww.blinkist.com jsdelivr.net * block\nwww.blinkist.com hcaptcha.com * block",
+  "dynamicFilteringString": "behind-the-scene * * noop\nbehind-the-scene * inline-script noop\nbehind-the-scene * 1p-script noop\nbehind-the-scene * 3p-script noop\nbehind-the-scene * 3p-frame noop\nbehind-the-scene * image noop\nbehind-the-scene * 3p noop\n* * 3p block\nwww.blinkist.com blinkist.io * allow\nwww.blinkist.com d17pjsg7x52x9r.cloudfront.net * allow\nwww.blinkist.com jsdelivr.net * block\nwww.blinkist.com hcaptcha.com * allow",
   "urlFilteringString": "",
   "hostnameSwitchesString": "no-large-media: behind-the-scene false\nno-remote-fonts: * true",
   "userFilters": ""
