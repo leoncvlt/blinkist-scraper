@@ -256,13 +256,18 @@ def get_all_books_for_categories(driver, category):
     return books_links
 
 
-def get_all_books(driver, language):
+def get_all_books(driver, match_language):
     log.info(f"Getting all Blinkist books from sitemap...")
     all_books_links = []
     driver.get("https://www.blinkist.com/en/sitemap")
-    books_items = driver.find_elements_by_css_selector(
-        f".sitemap__section.sitemap__section--books a[href$='{language}']"
-    )
+    
+    if match_language:
+        selector = f".sitemap__section.sitemap__section--books a[href$='{match_language}']"
+    else:
+        selector = ".sitemap__section.sitemap__section--books a"
+
+    books_items = driver.find_elements_by_css_selector(selector)
+    
     for item in books_items:
         href = item.get_attribute("href")
         all_books_links.append(href)
@@ -401,12 +406,8 @@ def scrape_book_audio(driver, book_json, language):
     # navigate to the book's reader page which also contains the media player for the first audio blink
     book_reader_url = f'https://www.blinkist.com/{language}/nc/reader/{book_json["slug"]}'
 
-    # check if the url needs to change
-    if not driver.current_url == book_reader_url:
-        log.info(f"Scraping book audio at {book_reader_url}")
-        driver.get(book_reader_url)
-    else:
-        log.info("Scraping book audio.")
+    log.info(f"Scraping book audio at {book_reader_url}")
+    driver.get(book_reader_url)
 
     # check for re-direct to the upgrade page
     detect_needs_upgrade(driver)

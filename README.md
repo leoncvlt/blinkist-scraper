@@ -111,5 +111,8 @@ During scraping, the script saves all book's metadata in json files inside the `
 ## Scraping with a free account
 If you don't have a Blinkist premium account, you can still scrape the free daily book. To do so automatically, pass the `--daily-book` argument - this behaves like scraping a single book.
 
-# Quirks & known Bugs
+## Quirks & known Bugs
 - Some people have had troubles when dealing with long generated book files (> 260 characters in Windows). Although this should be handled gracefully by the script, if you keep seeing "FileNotFoundError" when trying to create the .html / .m4a files, try and turn on long filenames support on your system: https://www.itprotoday.com/windows-10/enable-long-file-name-support-windows-10, and make sure you have a recent distribution of ffmpeg if using it (old versions had some bugs in dealing with long filenames)
+
+## Support [![Buy me a coffee](https://img.shields.io/badge/-buy%20me%20a%20coffee-lightgrey?style=flat&logo=buy-me-a-coffee&color=FF813F&logoColor=white "Buy me a coffee")](https://www.buymeacoffee.com/leoncvlt)
+If this tool has proven useful to you, consider [buying me a coffee](https://www.buymeacoffee.com/leoncvlt) to support development of this and [many other projects](https://github.com/leoncvlt?tab=repositories).
