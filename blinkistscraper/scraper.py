@@ -131,29 +131,53 @@ def initialize_driver(headless=True, with_ublock=False, chromedriver_path=None):
 
 def login(driver, language, email, password):
     # we need to navigate to a page first in order to load eventual cookies
-    driver.get(f"https://www.blinkist.com/{language}")
+    driver.get(f"https://www.blinkist.com/{language}/nc/login")
     is_logged_in = False
 
     # if we have any stored login cookie, load them into the driver
     if has_login_cookies():
         load_login_cookies(driver)
+	
+	# assume that a captcha needs to be solved, if no blinkist logo appears within 5sec
+    try:
+        WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located(
+                (By.CLASS_NAME, "header__logo")
+            )
+        )
+    except TimeoutException as ex:
+        log.info("Please solve captcha to proceed!")
+	
+	# fail if captcha not solved within 60sec
+    try:
+        WebDriverWait(driver, 60).until(
+            EC.presence_of_element_located(
+                (By.CLASS_NAME, "header__logo")
+            )
+        )
+    except TimeoutException as ex:
+        log.error("Error. Captcha needs to be solved within 1 minute")
+        return False
 
-    # navigate to the login page and check for the login email input
-    # if not found, assume we're logged in
+    # navigate to the login page
     sign_in_url = f"https://www.blinkist.com/{language}/nc/login"
     driver.get(sign_in_url)
+	
+	# click on cookie banner, if necessary
+    time.sleep(1.0)
+    try:
+        cookiebanner = driver.find_element_by_class_name("cookie-disclaimer__cta")
+    except:
+        pass
+    else:
+        cookiebanner.click()
+	
+	# check for the login email input. if not found, assume we're logged in
     try:
         driver.find_element_by_id("login-form_login_email")
     except NoSuchElementException:
         is_logged_in = True
-    # try:
-    #     WebDriverWait(driver, 360).until(
-    #         EC.presence_of_element_located((By.ID, "login-form_login_email"))
-    #     )
-    # except TimeoutException as ex:
-    #     log.error("Error logging in.")
-    #     return False
-
+    
     # if not logged in, autofill the email and password inputs with the
     # provided login credentials
     if not is_logged_in:

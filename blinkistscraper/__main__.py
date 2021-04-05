@@ -180,6 +180,12 @@ def main():
         help="Path to a specific chromedriver executable instead of the built-in one",
     )
     parser.add_argument(
+        "--no-ublock",
+        action="store_true",
+        default=False,
+        help="Disable the uBlock Chrome extension. Might be needed to solve captcha",
+    )
+    parser.add_argument(
         "-v", "--verbose", action="store_true", help="Increases logging verbosity"
     )
 
@@ -274,7 +280,7 @@ def main():
         match_language = args.language if args.match_language else ""
         start_headless = args.headless
         # add uBlock (except on headless)
-        use_ublock = not args.headless
+        use_ublock = not args.no_ublock and not args.headless
         driver = scraper.initialize_driver(
             headless=start_headless,
             with_ublock=use_ublock,

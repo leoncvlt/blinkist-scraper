@@ -83,6 +83,8 @@ optional arguments:
   --chromedriver CHROMEDRIVER
                         Path to a specific chromedriver executable instead of
                         the built-in one
+  --no-ublock           Disable the uBlock Chrome extension. Might be needed
+                        to solve captcha
   -v, --verbose         Increases logging verbosity
 ```
 
