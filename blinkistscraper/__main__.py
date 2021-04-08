@@ -104,7 +104,7 @@ def main():
         "--get-amazon-url",
         action="store_true",
         default=False,
-        help="Get Amazon book link as well. Will additionally scrape .../en/books/... for this",
+        help="Scrape Amazon product ID as well. Will additionally scrape https://.../en/books/ for this",
     )
     parser.add_argument(
         "--book",

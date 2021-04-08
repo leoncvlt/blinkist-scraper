@@ -13,13 +13,12 @@ def get_or_read_json(book_json_or_file):
 def sanitize_name(name):
     return re.sub(r'[\\/*?:"<>|.]', "", name).strip()
 
+
 def sanitize_amazon_id(amazon_url):
     amazon_url = amazon_url.replace("https://www.amazon.de/dp/", "")
     amazon_url = amazon_url.replace("https://www.amazon.com/dp/", "")
     amazon_id = amazon_url.split('?tag=')[0].replace("/","")
     return amazon_id
-
-
 
 
 def get_book_dump_filename(book_json_or_url):

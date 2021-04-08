@@ -394,17 +394,25 @@ def scrape_book_data(
                         supplement_text = supplement_content.get_attribute("innerHTML")
                         chapter_json["supplement"] = supplement_text
                     break
-    # if the --get-amazon-url cli-switch is enabled, go to ./books/. page and extract amazon url
+    
+    # if the --get-amazon-url cli-switch is enabled, go to ../books/.. page and extract amazon product id
     if get_amazon_url:
         books_url = url.replace("/nc/reader/", "/books/")
         driver.get(books_url)
-        time.sleep(1.0) 
 
-        buy_button = driver.find_element_by_class_name("buy-book-button")
-        if buy_button.is_displayed():
-            amazon_url = buy_button.get_attribute("href")
-            book["amazon_id"] = sanitize_amazon_id(amazon_url)
-            print(book["amazon_id"])
+        try:
+            WebDriverWait(driver, 5).until(
+                EC.element_to_be_clickable(
+                    (By.CLASS_NAME, "buy-book-button")
+                )
+            )
+        except TimeoutException as ex:
+            log.warning("No 'Buy' button found. No Amazon ASIN collected.")
+        else:
+            buy_button = driver.find_element_by_class_name("buy-book-button")
+            if buy_button.is_displayed():
+                amazon_url = buy_button.get_attribute("href")
+                book["amazon_id"] = sanitize_amazon_id(amazon_url)
 
     # if we are scraping by category, add it to the book metadata
     book["category"] = category["label"]
