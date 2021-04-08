@@ -18,8 +18,8 @@ The script will automatically try to download and use the appropriate chromedriv
 usage: blinkistscraper [-h] [--language {en,de}] [--match-language]
                        [--cooldown COOLDOWN] [--headless] [--audio]
                        [--concat-audio] [--keep-noncat] [--no-scrape]
-                       [--book BOOK] [--daily-book] [--books BOOKS]
-                       [--book-category BOOK_CATEGORY]
+                       [--get-amazon-url] [--book BOOK] [--daily-book]
+                       [--books BOOKS] [--book-category BOOK_CATEGORY]
                        [--categories CATEGORIES [CATEGORIES ...]]
                        [--ignore-categories IGNORE_CATEGORIES [IGNORE_CATEGORIES ...]]
                        [--create-html] [--create-epub] [--create-pdf]
@@ -49,6 +49,8 @@ optional arguments:
   --no-scrape           Don't scrape the website, only process existing json
                         files in the dump folder. Do not provide email or
                         password with this option.
+  --get-amazon-url      Scrape Amazon product ID as well. Will additionally
+                        scrape https://.../en/books/ for this
   --book BOOK           Scrapes this book only, takes the blinkist url for the
                         book(e.g. https://www.blinkist.com/en/books/... or
                         https://www.blinkist.com/en/nc/reader/...)
