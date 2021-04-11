@@ -1,4 +1,6 @@
-import os, json, re
+import os
+import json
+import re
 from shutil import which
 
 
@@ -39,4 +41,3 @@ def get_book_pretty_filename(book_json, extension=""):
 
 def is_installed(tool):
     return which(tool)
-
