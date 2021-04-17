@@ -14,6 +14,13 @@ def sanitize_name(name):
     return re.sub(r'[\\/*?:"<>|.]', "", name).strip()
 
 
+def sanitize_amazon_id(amazon_url):
+    amazon_url = amazon_url.replace("https://www.amazon.de/dp/", "")
+    amazon_url = amazon_url.replace("https://www.amazon.com/dp/", "")
+    amazon_id = amazon_url.split('?tag=')[0].replace("/","")
+    return amazon_id
+
+
 def get_book_dump_filename(book_json_or_url):
     if "blinkist.com" in book_json_or_url:
         return os.path.join("dump", book_json_or_url.split("/")[-1] + ".json")
