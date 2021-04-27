@@ -279,10 +279,12 @@ def get_categories(
             categories_list = driver.find_element_by_class_name(classname)
             break
         except Exception:
-            log.warning(
+            log.debug(
                 "Could not find categories container element with class "
-                f"'{classname}'"
-            )
+                f"'{classname}'")
+    else:
+        log.warning(
+            "Could not find a categories container element")
 
     # parse the invidual category links
     categories_items = categories_list.find_elements_by_tag_name("li")
