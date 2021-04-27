@@ -8,7 +8,7 @@ from shutil import copyfile as copy_file
 
 import chromedriver_autoinstaller
 from seleniumwire import webdriver
-from selenium.webdriver.chrome.options import Options
+# from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.common.exceptions import ElementNotVisibleException
 from selenium.webdriver.support import expected_conditions as EC
@@ -62,7 +62,8 @@ def initialize_driver(
             sys.exit()
 
     log.info(f"Initialising chromedriver at {chromedriver_path}...")
-    chrome_options = Options()
+    # chrome_options = Options()
+    chrome_options = webdriver.ChromeOptions()
     if headless:
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("window-size=1920,1080")
