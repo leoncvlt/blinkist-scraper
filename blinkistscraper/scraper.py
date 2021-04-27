@@ -10,6 +10,7 @@ import chromedriver_autoinstaller
 from seleniumwire import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import ElementNotVisibleException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -251,11 +252,24 @@ def get_categories(
 
     # click the discover dropdown to reveal categories links
     try:
+        WebDriverWait(driver, 45).until(
+                EC.presence_of_element_located(
+                    (By.CLASS_NAME, "header-menu__trigger")
+                )
+            )
         categories_menu = driver.find_element_by_class_name(
             "header-menu__trigger")
         categories_menu.click()
     except NoSuchElementException:
         log.warning("Could not find categories dropdown element")
+        return
+    except ElementNotVisibleException:
+        # element not interactable
+        log.debug("Found the dropdown element, but could not click it. "
+                  "Using fallback JS code.")
+        driver.execute_script(
+            "document.querySelector('.header-menu__trigger').click()"
+        )
 
     # find the categories links container
     categories_list = None
