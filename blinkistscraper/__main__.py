@@ -389,11 +389,25 @@ def main():
         finish(start_time, processed_books, driver)
 
 
-try:
-    main()
-except KeyboardInterrupt:
-    log.critical("Interrupted by user")
+# operating-system level exit
+def sys_exit():
     try:
         sys.exit(0)
     except SystemExit:
         os._exit(0)
+
+
+# catch all errors and exit properly
+try:
+    main()
+
+# exiting via keyboard
+except KeyboardInterrupt:
+    log.critical("Interrupted by user")
+    sys_exit()
+
+# other errors...
+except Exception as e:
+    log.exception(e)
+    log.critical('Uncaught Exception. Exiting...')
+    sys_exit()
