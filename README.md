@@ -49,20 +49,20 @@ optional arguments:
   --no-scrape           Don't scrape the website, only process existing json
                         files in the dump folder. Do not provide email or
                         password with this option.
-  --book BOOK           Scrapes this book only, takes the blinkist url for the
-                        book(e.g. https://www.blinkist.com/en/books/... or
+  --book BOOK           Scrapes this book only, takes the Blinkist URL for the
+                        book (e.g. https://www.blinkist.com/en/books/... or
                         https://www.blinkist.com/en/nc/reader/...)
   --daily-book          Scrapes the free daily book only.
   --books BOOKS         Scrapes the list of books, takes a txt file with the
-                        list of blinkist urls for the books(e.g.
+                        list of Blinkist URL's for the books (e.g.
                         https://www.blinkist.com/en/books/... or
                         https://www.blinkist.com/en/nc/reader/...)
   --book-category BOOK_CATEGORY
                         When scraping a single book, categorize it under this
-                        category (works with '--book' only)
+                        category (works with '--book' and '--daily-book' only)
   --categories CATEGORIES [CATEGORIES ...]
                         Only the categories whose label contains at least one
-                        string here will be scraped.Case-insensitive; use
+                        string here will be scraped. Case-insensitive; use
                         spaces to separate categories. (e.g. '--categories
                         entrep market' will only scrape books under
                         'Entrepreneurship' and 'Marketing & Sales')
@@ -83,8 +83,10 @@ optional arguments:
   --chromedriver CHROMEDRIVER
                         Path to a specific chromedriver executable instead of
                         the built-in one
-  --no-ublock           Disable the uBlock Chrome extension. Might be needed
-                        to solve captcha
+  --no-ublock           Disable the uBlock Chrome extension. This will
+                        completely skip the installation (and setup) of
+                        ublock. If you want to use ublock content blocking, then
+                        run the script again without this flag.
   -v, --verbose         Increases logging verbosity
 ```
 

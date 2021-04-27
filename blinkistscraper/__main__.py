@@ -138,7 +138,7 @@ def main():
         "--book-category",
         default="Uncategorized",
         help="When scraping a single book, categorize it under this category "
-        "(works with '--book' only)"
+        "(works only with '--daily-book', '--book', and '--books')"
     )
     parser.add_argument(
         "--categories",
@@ -202,8 +202,10 @@ def main():
         "--no-ublock",
         action="store_true",
         default=False,
-        help="Disable the uBlock Chrome extension. Might be needed to solve"
-        "captcha"
+        help="Disable the uBlock Chrome extension. "
+        "This will completely skip the installation (and setup) of ublock. "
+        "If you want to use ublock content blocking, then run the script "
+        "again without this flag."
     )
     parser.add_argument(
         "-v", "--verbose", action="store_true",
