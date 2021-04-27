@@ -187,11 +187,14 @@ def login(driver, language, email, password):
     driver.get(sign_in_url)
 
     # click on cookie banner, if necessary
-    time.sleep(1.0)
     try:
-        cookiebanner = driver.find_element_by_class_name(
-            "cookie-disclaimer__cta")
-        cookiebanner.click()
+        WebDriverWait(driver, 3).until(
+            EC.presence_of_element_located(
+                (By.CLASS_NAME, "cookie-disclaimer__cta")
+            )
+        )
+        driver.find_element_by_class_name(
+            "cookie-disclaimer__cta").click()
     except Exception:
         pass
 
