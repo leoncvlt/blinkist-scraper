@@ -23,8 +23,8 @@ usage: blinkistscraper [-h] [--language {en,de}] [--match-language]
                        [--categories CATEGORIES [CATEGORIES ...]]
                        [--ignore-categories IGNORE_CATEGORIES [IGNORE_CATEGORIES ...]]
                        [--create-html] [--create-epub] [--create-pdf]
-                       [--save-cover] [--embed-cover-art]
-                       [--chromedriver CHROMEDRIVER] [-v]
+                       [--save-cover] [--embed-cover-art] 
+                       [--chromedriver CHROMEDRIVER] [--no-ublock] [--no-sandbox] [-v]
                        email password
 
 positional arguments:
@@ -87,6 +87,9 @@ optional arguments:
                         completely skip the installation (and setup) of
                         ublock. If you want to use ublock content blocking, then
                         run the script again without this flag.
+                        to solve captcha
+  --no-sandbox          When running as root (e.g. in Docker), Chrome requires
+                        the '--no-sandbox' argument     
   -v, --verbose         Increases logging verbosity
 ```
 
