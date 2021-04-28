@@ -87,7 +87,6 @@ optional arguments:
                         completely skip the installation (and setup) of
                         ublock. If you want to use ublock content blocking, then
                         run the script again without this flag.
-                        to solve captcha
   --no-sandbox          When running as root (e.g. in Docker), Chrome requires
                         the '--no-sandbox' argument     
   -v, --verbose         Increases logging verbosity
