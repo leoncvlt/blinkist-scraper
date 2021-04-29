@@ -507,8 +507,7 @@ def scrape_book_audio(driver, book_json, language):
     # navigate to the book's reader page which also contains the media player
     # for the first audio blink
     book_reader_url = (
-        f'https://www.blinkist.com/{language}/nc',
-        f'{"/daily" * daily_read}/reader/{book_json["slug"]}')
+        f'https://www.blinkist.com/{language}/nc/reader/{book_json["slug"]}')
 
     log.info(f"Scraping book audio at {book_reader_url}")
     driver.get(book_reader_url)
