@@ -1,4 +1,5 @@
-import sys, logging
+import sys
+import logging
 
 
 def setup(log):
@@ -9,7 +10,8 @@ def setup(log):
 
     # add colored logs if colorama is availabe
     try:
-        import colorama, copy
+        import colorama
+        import copy
 
         LOG_COLORS = {
             logging.DEBUG: colorama.Fore.GREEN,
@@ -21,29 +23,33 @@ def setup(log):
 
         class ColorFormatter(logging.Formatter):
             def format(self, record, *args, **kwargs):
-                # if the corresponding logger has children, they may receive modified
-                # record, so we want to keep it intact
+                # if the corresponding logger has children, they may receive
+                # modified record, so we want to keep it intact
                 new_record = copy.copy(record)
                 if new_record.levelno in LOG_COLORS:
-                    new_record.levelname = "{color_begin}{level}{color_end}".format(
-                        level=new_record.levelname,
-                        color_begin=LOG_COLORS[new_record.levelno],
-                        color_end=colorama.Style.RESET_ALL,
-                    )
-                return super(ColorFormatter, self).format(new_record, *args, **kwargs)
+                    new_record.levelname = (
+                        "{color_begin}{level}{color_end}".format(
+                            level=new_record.levelname,
+                            color_begin=LOG_COLORS[new_record.levelno],
+                            color_end=colorama.Style.RESET_ALL,
+                        ))
+                return super(ColorFormatter, self).format(
+                    new_record, *args, **kwargs)
 
         log_screen_handler.setFormatter(
             ColorFormatter(
                 fmt="%(asctime)s %(levelname)-8s %(message)s",
                 datefmt="{color_begin}[%H:%M:%S]{color_end}".format(
-                    color_begin=colorama.Style.DIM, color_end=colorama.Style.RESET_ALL
+                    color_begin=colorama.Style.DIM,
+                    color_end=colorama.Style.RESET_ALL
                 ),
             )
         )
-    except ModuleNotFoundError as identifier:
+    except ModuleNotFoundError:
         log_screen_handler.setFormatter(
             logging.Formatter(
-                fmt="%(asctime)s %(levelname)-8s %(message)s", datefmt="[%H:%M:%S]",
+                fmt="%(asctime)s %(levelname)-8s %(message)s",
+                datefmt="[%H:%M:%S]",
             )
         )
         pass
@@ -60,4 +66,3 @@ def get(name):
 
 def set_verbose(log, verbose):
     log.setLevel(logging.INFO if not verbose else logging.DEBUG)
-

@@ -49,20 +49,20 @@ optional arguments:
   --no-scrape           Don't scrape the website, only process existing json
                         files in the dump folder. Do not provide email or
                         password with this option.
-  --book BOOK           Scrapes this book only, takes the blinkist url for the
-                        book(e.g. https://www.blinkist.com/en/books/... or
+  --book BOOK           Scrapes this book only, takes the Blinkist URL for the
+                        book (e.g. https://www.blinkist.com/en/books/... or
                         https://www.blinkist.com/en/nc/reader/...)
   --daily-book          Scrapes the free daily book only.
   --books BOOKS         Scrapes the list of books, takes a txt file with the
-                        list of blinkist urls for the books(e.g.
+                        list of Blinkist URL's for the books (e.g.
                         https://www.blinkist.com/en/books/... or
                         https://www.blinkist.com/en/nc/reader/...)
   --book-category BOOK_CATEGORY
                         When scraping a single book, categorize it under this
-                        category (works with '--book' only)
+                        category (works with '--book' and '--daily-book' only)
   --categories CATEGORIES [CATEGORIES ...]
                         Only the categories whose label contains at least one
-                        string here will be scraped.Case-insensitive; use
+                        string here will be scraped. Case-insensitive; use
                         spaces to separate categories. (e.g. '--categories
                         entrep market' will only scrape books under
                         'Entrepreneurship' and 'Marketing & Sales')
@@ -83,17 +83,20 @@ optional arguments:
   --chromedriver CHROMEDRIVER
                         Path to a specific chromedriver executable instead of
                         the built-in one
-  --no-ublock           Disable the uBlock Chrome extension. Might be needed
-                        to solve captcha
+  --no-ublock           Disable the uBlock Chrome extension. This will
+                        completely skip the installation (and setup) of
+                        ublock. If you want to use ublock content blocking, then
+                        run the script again without this flag.
   --no-sandbox          When running as root (e.g. in Docker), Chrome requires
-                        the '--no-sandbox' argument       
+                        the '--no-sandbox' argument     
   -v, --verbose         Increases logging verbosity
 ```
 
 ## Basic usage
 `python blinkistscraper email password` where email and password are the login details to your premium Blinkist account.
 
-The script uses Selenium with a Chrome driver to scrape the site. Blinkist uses captchas on login, so the script will wait for the user to solve it and login on first run (although the email and password fields are filled in automatically from the arguments)  - the sessions cookies are stored so the script can be run in headless mode with the appropriate flag afterwards. The output files are stored in the `books` folder, arranged in subfolders by category and by the book's title and author.
+The script uses Selenium with a Chrome driver to scrape the site automatically using the provided credentials. Sometimes during scraping, a captcha block-page will appear. When this happens, the script will try to pause and wait for the user to solve it. After some time (i.e. one minute), the script will time out.
+The output files are stored in the `books` folder, arranged in subfolders by category and by the book's title and author.
 
 ## Customizing HTML output
 The script builds a nice-looking html version of the book by using the 'book.html' and 'chapter.html' files in the 'templates' folder as a base. Every parameter between curly braces in those files (e.g. `{title}`) is replaced by the appropriate value from the book metadata (dumped in the `dump` folder upon scraping), following a 1-to-1 naming convention with the json parameters (.e.g `{title}` will be replaced by the `title` parameter, `{who_should_read}` but the `who_should_read` one and so on).

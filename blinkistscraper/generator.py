@@ -1,7 +1,13 @@
-import os, json, subprocess
+import os
 from ebooklib import epub
 
-from utils import *
+# from utils import *
+from utils import get_book_pretty_filename
+from utils import get_book_pretty_filepath
+from utils import is_installed
+from utils import get_or_read_json
+# from utils import get_book_short_pretty_filename
+
 import logger
 
 log = logger.get(f"blinkistscraper.{__name__}")
@@ -13,13 +19,15 @@ def generate_book_html(book_json_or_file, cover_img_file=False):
     filename = get_book_pretty_filename(book_json, ".html")
     html_file = os.path.join(filepath, filename)
     if os.path.exists(html_file):
-        log.debug(f"Html file for {book_json['slug']} already exists, not generating...")
+        log.debug(f"Html file for {book_json['slug']} already exists, not "
+                  "generating...")
         return html_file
     log.info(f"Generating .html for {book_json['slug']}")
 
     # open the book html template and replace every occurency of {{key}}
     # with the relevant parameter from the json file
-    book_template_file = open(os.path.join(os.getcwd(), "templates", "book.html"), "r")
+    book_template_file = open(
+        os.path.join(os.getcwd(), "templates", "book.html"), "r")
     book_template = book_template_file.read()
     book_html = book_template
     for key in book_json:
@@ -30,8 +38,9 @@ def generate_book_html(book_json_or_file, cover_img_file=False):
         cover_img_url = book_json["image_url"]
         book_html = book_html.replace(cover_img_url, cover_img_file)
 
-    # when the special tag {__chapters__} is found, open the chapter template file
-    # and do the same, then add the template chapter's html into the book's html
+    # when the special tag {__chapters__} is found, open the chapter template
+    # file and do the same, then add the template chapter's html into the
+    # book's html
     if "{__chapters__}" in book_template:
         chapters_html = []
         chapter_template_file = open(
@@ -66,7 +75,8 @@ def generate_book_epub(book_json_or_file):
     filename = get_book_pretty_filename(book_json, ".epub")
     epub_file = os.path.join(filepath, filename)
     if os.path.exists(epub_file):
-        log.debug(f"Epub file for {book_json['slug']} already exists, not generating...")
+        log.debug(f"Epub file for {book_json['slug']} already exists, not "
+                  "generating...")
         return epub_file
     log.info(f"Generating .epub for {book_json['slug']}")
     book = epub.EpubBook()
@@ -105,9 +115,11 @@ def generate_book_epub(book_json_or_file):
     book.add_item(epub.EpubNav())
 
     # define CSS style
-    style = open(os.path.join(os.getcwd(), "templates", "epub.css"), "r").read()
+    style = open(
+        os.path.join(os.getcwd(), "templates", "epub.css"), "r").read()
     nav_css = epub.EpubItem(
-        uid="style_nav", file_name="style/nav.css", media_type="text/css", content=style
+        uid="style_nav", file_name="style/nav.css", media_type="text/css",
+        content=style
     )
     book.add_item(nav_css)
 
@@ -124,7 +136,8 @@ def generate_book_epub(book_json_or_file):
 def generate_book_pdf(book_json_or_file, cover_img_file=False):
     if not is_installed("wkhtmltopdf"):
         log.warning(
-            f"wkhtmltopdf needs to be installed and added to PATH to generate pdf files"
+            "wkhtmltopdf needs to be installed and added to PATH to generate "
+            "pdf files"
         )
         return
 
@@ -133,12 +146,14 @@ def generate_book_pdf(book_json_or_file, cover_img_file=False):
     filename = get_book_pretty_filename(book_json, ".pdf")
     pdf_file = os.path.join(filepath, filename)
     if os.path.exists(pdf_file):
-        log.debug(f"Pdf file for {book_json['slug']} already exists, not generating...")
+        log.debug(f"Pdf file for {book_json['slug']} already exists, not "
+                  "generating...")
         return pdf_file
 
     # generates the html file if it doesn't already exists
     html_file = os.path.join(
-        get_book_pretty_filepath(book_json), get_book_pretty_filename(book_json, ".html")
+        get_book_pretty_filepath(book_json),
+        get_book_pretty_filename(book_json, ".html")
     )
     if not os.path.exists(html_file):
         generate_book_html(book_json_or_file, cover_img_file)
@@ -152,7 +167,8 @@ def generate_book_pdf(book_json_or_file, cover_img_file=False):
 def combine_audio(book_json, files, keep_blinks=False, cover_img_file=False):
     if not is_installed("ffmpeg"):
         log.warning(
-            f"ffmpeg needs to be installed and added to PATH to combine audio files"
+            "ffmpeg needs to be installed and added to PATH to combine audio "
+            "files"
         )
         return
 
@@ -166,11 +182,15 @@ def combine_audio(book_json, files, keep_blinks=False, cover_img_file=False):
 
     # ffmpeg fails on windows if the output filepath is longer than 260 chars
     # if len(tagged_audio_file) >= 260:
-    #   log.info(f"[!] ffmpeg output file longer than 260 characters. Trying shorter filename...")
-    #   tagged_audio_file = os.path.abspath(os.path.join(filepath, get_book_short_pretty_filename(book_json, ".m4a")))
-    #   if len(tagged_audio_file) >= 260:
-    #     log.info(f"[!] shorter filename still too long! Consider running the script from a shorter path.")
-    #     return
+    #     log.warn("ffmpeg output file longer than 260 characters. Trying "
+    #              "shorter filename...")
+    #     tagged_audio_file = os.path.abspath(
+    #         os.path.join(
+    #             filepath, get_book_short_pretty_filename(book_json, ".m4a")))
+    #     if len(tagged_audio_file) >= 260:
+    #         log.warn("shorter filename still too long! Consider running "
+    #                  "the script from a shorter path.")
+    #         return
 
     with open(files_list, "w", encoding="utf-8") as outfile:
         for file in files:
@@ -178,19 +198,24 @@ def combine_audio(book_json, files, keep_blinks=False, cover_img_file=False):
             sanitized_file = os.path.abspath(file).replace("'", "'\\''")
             outfile.write(f"file '{sanitized_file}'\n")
     silent = "-nostats -loglevel 0 -y"
-    concat_command = f'ffmpeg {silent} -f concat -safe 0 -i "{files_list}" -c copy "{combined_audio_file}"'
+    concat_command = (
+        f'ffmpeg {silent} -f concat -safe 0 -i "{files_list}" -c copy '
+        f'"{combined_audio_file}"')
     os.system(concat_command)
     if cover_img_file:
-        cover_embed = f'-i "{cover_img_file}" -map 0 -map 1 -disposition:v:0 attached_pic'
+        cover_embed = (
+            f'-i "{cover_img_file}" -map 0 -map 1 -disposition:v:0 '
+            'attached_pic')
     else:
         cover_embed = ""
     title_metadata = f"-metadata title=\"{book_json['title']}\""
     author_metadata = f"-metadata artist=\"{book_json['author']}\""
     category_metadata = f"-metadata album=\"{book_json['category']}\""
     genre_metadata = '-metadata genre="Blinkist"'
-    tag_command = f'ffmpeg {silent} -i "{combined_audio_file}" {cover_embed} -c copy '
-    tag_command += (
-        f"{title_metadata} {author_metadata} {category_metadata} {genre_metadata}"
+    tag_command = (
+        f'ffmpeg {silent} -i "{combined_audio_file}" {cover_embed} -c copy '
+        f"{title_metadata} {author_metadata} "
+        f"{category_metadata} {genre_metadata}"
     )
     tag_command += f' "{tagged_audio_file}"'
     os.system(tag_command)
@@ -201,8 +226,8 @@ def combine_audio(book_json, files, keep_blinks=False, cover_img_file=False):
     if os.path.exists(combined_audio_file):
         os.remove(combined_audio_file)
     if not (keep_blinks):
-        log.debug(f"Cleaning up individual audio files for {book_json['slug']}")
+        log.debug(
+            f"Cleaning up individual audio files for {book_json['slug']}")
         for file in files:
             if os.path.exists(file):
                 os.remove(os.path.abspath(file))
-

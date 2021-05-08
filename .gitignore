@@ -138,15 +138,30 @@ dmypy.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
 
+# Visual Studio Project File
 .vscode
+
+# Scraper Data
 books
 dump
 logs
+
+# Scripts / Shortcuts / Batch Files
 *.bat
 *.log
 *.cmd
 *.lnk
-cookies.pkl
+
+# Scraper Cookies:
+*.pkl
 
 # Poetry .lock file
 poetry.lock
+
+# Chrome Driver Binaries...
+# From "undetected-chromedriver" Package
+chromedriver.exe
+chromedriver.zip
+
+# Misc:
+*.js

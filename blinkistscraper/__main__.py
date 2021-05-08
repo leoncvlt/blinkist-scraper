@@ -1,4 +1,8 @@
-import argparse, sys, os, glob, time
+import argparse
+import sys
+import os
+import glob
+import time
 
 import scraper
 import generator
@@ -11,13 +15,14 @@ def scraped_audio_exists(book_json):
     from utils import get_book_pretty_filepath, get_book_pretty_filename
 
     filepath = get_book_pretty_filepath(book_json)
-    concat_audio = os.path.join(filepath, get_book_pretty_filename(book_json, ".m4a"))
+    concat_audio = os.path.join(
+        filepath, get_book_pretty_filename(book_json, ".m4a"))
     existing_audio_files = []
     chapters = book_json["chapters"]
     chapter_count = len(chapters)
 
     for chapter in enumerate(chapters):
-        index = chapter[0]
+        # index = chapter[0]
         chapter_data = chapter[1]
         chapter_audio_filename = str(chapter_data["order_no"]) + ".m4a"
         chapter_audio_path = os.path.join(filepath, chapter_audio_filename)
@@ -33,7 +38,8 @@ def scraped_audio_exists(book_json):
         else:
             if len(existing_audio_files) > 0:
                 log.debug(
-                    f"Found audio files for {len(existing_audio_files)} out of {chapter_count} blinks"
+                    f"Found audio files for {len(existing_audio_files)} out "
+                    f"of {chapter_count} blinks"
                 )
             return False
     else:
@@ -50,13 +56,15 @@ def main():
         "--language",
         choices={"en", "de"},
         default="en",
-        help="The language to scrape books in - either 'en' for english or 'de' for german",
+        help="The language to scrape books in - either 'en' for english or "
+        "'de' for german"
     )
     parser.add_argument(
         "--match-language",
         action="store_true",
         default=False,
-        help="Skip scraping books if not in the requested language (not all book are avaible in german)",
+        help="Skip scraping books if not in the requested language (not all "
+        "book are avaible in german)"
     )
 
     def check_cooldown(value):
@@ -68,128 +76,143 @@ def main():
         "--cooldown",
         type=check_cooldown,
         default=1,
-        help="Seconds to wait between scraping books, and downloading audio files. Can't be smaller than 1",
+        help="Seconds to wait between scraping books, and downloading audio "
+        "files. Can't be smaller than 1"
     )
     parser.add_argument(
         "--headless",
         action="store_true",
         default=False,
-        help="Start the automated web browser in headless mode. Works only if you already logged in once",
+        help="Start the automated web browser in headless mode. Works only if "
+        "you already logged in once"
     )
     parser.add_argument(
         "--audio",
         action="store_true",
         default=False,
-        help="Download the audio blinks for each book",
+        help="Download the audio blinks for each book"
     )
     parser.add_argument(
         "--concat-audio",
         action="store_true",
         default=False,
-        help="Concatenate the audio blinks into a single file and tag it. Requires ffmpeg",
+        help="Concatenate the audio blinks into a single file and tag it. "
+        "Requires ffmpeg"
     )
     parser.add_argument(
         "--keep-noncat",
         action="store_true",
         default=False,
-        help="Keep the individual blink audio files, instead of deleting them (works with '--concat-audio' only)",
+        help="Keep the individual blink audio files, instead of deleting them "
+        "(works with '--concat-audio' only)"
     )
     parser.add_argument(
         "--no-scrape",
         action="store_true",
         default=False,
-        help="Don't scrape the website, only process existing json files in the dump folder. Do not provide email or password with this option.",
+        help="Don't scrape the website, only process existing json files in "
+        "the dump folder. Do not provide email or password with this option."
     )
     parser.add_argument(
         "--book",
         default=False,
-        help="Scrapes this book only, takes the blinkist url for the book"
-        "(e.g. https://www.blinkist.com/en/books/... or https://www.blinkist.com/en/nc/reader/...)",
+        help="Scrapes this book only, takes the Blinkist URL for the book "
+        "(e.g. https://www.blinkist.com/en/books/... or "
+        "https://www.blinkist.com/en/nc/reader/...)"
     )
     parser.add_argument(
         "--daily-book",
         action="store_true",
         default=False,
-        help="Scrapes the free daily book only.",
+        help="Scrapes the free daily book only."
     )
     parser.add_argument(
         "--books",
         default=False,
-        help="Scrapes the list of books, takes a txt file with the list of blinkist urls for the books"
-        "(e.g. https://www.blinkist.com/en/books/... or https://www.blinkist.com/en/nc/reader/...)",
+        help="Scrapes the list of books, takes a txt file with the list of "
+        "Blinkist URL's for the books "
+        "(e.g. https://www.blinkist.com/en/books/... "
+        "or https://www.blinkist.com/en/nc/reader/...)"
     )
     parser.add_argument(
         "--book-category",
         default="Uncategorized",
-        help="When scraping a single book, categorize it under this category (works with '--book' only)",
+        help="When scraping a single book, categorize it under this category "
+        "(works only with '--daily-book', '--book', and '--books')"
     )
     parser.add_argument(
         "--categories",
         type=str,
         nargs="+",
         default="",
-        help=(
-            "Only the categories whose label contains at least one string here will be scraped."
-            "Case-insensitive; use spaces to separate categories. "
-            "(e.g. '--categories entrep market' will only scrape books under 'Entrepreneurship' and 'Marketing & Sales')"
-        ),
+        help="Only the categories whose label contains at least one string "
+        "here will be scraped. Case-insensitive; use spaces to separate "
+        "categories. (e.g. '--categories entrep market' will only scrape "
+        "books under 'Entrepreneurship' and 'Marketing & Sales')"
     )
     parser.add_argument(
         "--ignore-categories",
         type=str,
         nargs="+",
         default="",
-        help=(
-            "If a category label contains anything in ignored_categories, books under that category will not be scraped. "
-            "Case-insensitive; use spaces to separate categories. "
-            "(e.g. '--ignored-categories entrep market' will skip scraping of 'Entrepreneurship' and 'Marketing & Sales')"
-        ),
+        help="If a category label contains anything in ignored_categories, "
+        "books under that category will not be scraped. Case-insensitive; "
+        "use spaces to separate categories. (e.g. '--ignored-categories entrep"
+        " market' will skip scraping of 'Entrepreneurship' and 'Marketing & "
+        "Sales')"
     )
     parser.add_argument(
         "--create-html",
         action="store_true",
         default=True,
-        help="Generate a formatted html document for the book",
+        help="Generate a formatted html document for the book"
     )
     parser.add_argument(
         "--create-epub",
         action="store_true",
         default=True,
-        help="Generate a formatted epub document for the book",
+        help="Generate a formatted epub document for the book"
     )
     parser.add_argument(
         "--create-pdf",
         action="store_true",
         default=False,
-        help="Generate a formatted pdf document for the book. Requires wkhtmltopdf",
+        help="Generate a formatted pdf document for the book. Requires "
+        "wkhtmltopdf"
     )
     parser.add_argument(
         "--save-cover",
         action="store_true",
         default=False,
-        help="Save a copy of the Blink cover artwork in the folder",
+        help="Save a copy of the Blink cover artwork in the folder"
     )
     parser.add_argument(
         "--embed-cover-art",
         action="store_true",
         default=False,
-        help="Embed the Blink cover artwork into the concatenated audio file (works with '--concat-audio' only)",
+        help="Embed the Blink cover artwork into the concatenated audio file "
+        "(works with '--concat-audio' only)"
     )
     parser.add_argument(
         "--chromedriver",
-        help="Path to a specific chromedriver executable instead of the built-in one",
+        help="Path to a specific chromedriver executable instead of the built-"
+        "in one"
     )
     parser.add_argument(
         "--no-ublock",
         action="store_true",
         default=False,
-        help="Disable the uBlock Chrome extension. Might be needed to solve captcha",
+        help="Disable the uBlock Chrome extension. "
+        "This will completely skip the installation (and setup) of ublock. "
+        "If you want to use ublock content blocking, then run the script "
+        "again without this flag."
     )
     parser.add_argument(
         "--no-sandbox",
         action="store_true",
         default=False,
-        help="When running as root (e.g. in Docker), Chrome requires the '--no-sandbox' argument",
+        help="When running as root (e.g. in Docker), Chrome requires the "
+        "'--no-sandbox' argument",
     )
 
     parser.add_argument(
@@ -198,10 +221,12 @@ def main():
 
     if "--no-scrape" not in sys.argv:
         parser.add_argument(
-            "email", help="The email to log into your premium Blinkist account"
+            "email",
+            help="The email to log into your premium Blinkist account"
         )
         parser.add_argument(
-            "password", help="The password to log into your premium Blinkist account"
+            "password",
+            help="The password to log into your premium Blinkist account"
         )
 
     args = parser.parse_args()
@@ -217,7 +242,9 @@ def main():
         if args.create_pdf:
             generator.generate_book_pdf(book_json, cover_img)
 
-    def scrape_book(driver, processed_books, book_url, category, match_language):
+    def scrape_book(
+        driver, processed_books, book_url, category, match_language
+    ):
         book_json, dump_exists = scraper.scrape_book_data(
             driver, book_url, category=category, match_language=match_language
         )
@@ -268,7 +295,8 @@ def main():
         )
         total_books = len(processed_books)
         log.info(
-            f"Processed {total_books} book{'s' if total_books != 1 else ''} in {formatted_time}"
+            f"Processed {total_books} book{'s' if total_books != 1 else ''} "
+            f"in {formatted_time}"
         )
 
     # start scraping
@@ -334,7 +362,8 @@ def main():
                     ignored_categories=args.ignore_categories,
                 )
                 for category in categories:
-                    books_urls = scraper.get_all_books_for_categories(driver, category)
+                    books_urls = scraper.get_all_books_for_categories(
+                        driver, category)
                     for book_url in books_urls:
                         dump_exists = scrape_book(
                             driver,
@@ -349,9 +378,11 @@ def main():
                             time.sleep(args.cooldown)
                 # scrape all books to process uncategorized books
                 all_books = scraper.get_all_books(driver, match_language)
-                uncategorized_books = [x for x in all_books if x not in processed_books]
+                uncategorized_books = [
+                    x for x in all_books if x not in processed_books]
                 log.info(
-                    f"Scraping {len(uncategorized_books)} remaining uncategorized books..."
+                    f"Scraping {len(uncategorized_books)} remaining "
+                    "uncategorized books..."
                 )
                 for book_url in uncategorized_books:
                     dump_exists = scrape_book(
@@ -368,12 +399,25 @@ def main():
         finish(start_time, processed_books, driver)
 
 
-try:
-    main()
-except KeyboardInterrupt:
-    log.critical("Interrupted by user")
+# operating-system level exit
+def sys_exit():
     try:
         sys.exit(0)
     except SystemExit:
         os._exit(0)
 
+
+# catch all errors and exit properly
+try:
+    main()
+
+# exiting via keyboard
+except KeyboardInterrupt:
+    log.critical("Interrupted by user")
+    sys_exit()
+
+# other errors...
+except Exception as e:
+    log.exception(e)
+    log.critical('Uncaught Exception. Exiting...')
+    sys_exit()

@@ -1,15 +1,25 @@
-import os, time, requests, json, pickle, sys
+import os
+import time
+import requests
+import json
+import pickle
+import sys
 from shutil import copyfile as copy_file
 
 import chromedriver_autoinstaller
 from seleniumwire import webdriver
-from selenium.webdriver.chrome.options import Options
+# from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import ElementNotVisibleException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 
-from utils import *
+# from utils import *
+from utils import get_book_pretty_filepath
+from utils import get_book_dump_filename
+from utils import sanitize_name
+
 import logger
 
 log = logger.get(f"blinkistscraper.{__name__}")
@@ -35,7 +45,10 @@ def store_login_cookies(driver):
     pickle.dump(driver.get_cookies(), open("cookies.pkl", "wb"))
 
 
-def initialize_driver(headless=True, with_ublock=False, no_sandbox=False, chromedriver_path=None):
+def initialize_driver(
+    headless=True, with_ublock=False, no_sandbox=False, chromedriver_path=None
+):
+
     if not chromedriver_path:
         try:
             chromedriver_path = chromedriver_autoinstaller.install()
@@ -44,12 +57,14 @@ def initialize_driver(headless=True, with_ublock=False, no_sandbox=False, chrome
                 f"Failed to install the built-in chromedriver: {exception}\n"
                 "download the correct version for your system at "
                 "https://chromedriver.chromium.org/downloads and use the"
-                "--chromedriver argument to point to the chromedriver executable"
+                "--chromedriver argument to point to the chromedriver "
+                "executable."
             )
             sys.exit()
 
     log.info(f"Initialising chromedriver at {chromedriver_path}...")
-    chrome_options = Options()
+    # chrome_options = Options()
+    chrome_options = webdriver.ChromeOptions()
     if headless:
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("window-size=1920,1080")
@@ -61,11 +76,15 @@ def initialize_driver(headless=True, with_ublock=False, no_sandbox=False, chrome
     # allows selenium to accept cookies with a non-int64 'expiry' value
     chrome_options.add_experimental_option("w3c", False)
     # removes the 'DevTools listening' log message
-    chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
+    chrome_options.add_experimental_option(
+        "excludeSwitches", ["enable-logging"])
     # prevent Cloudflare from detecting ChromeDriver as bot
-    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    chrome_options.add_experimental_option("useAutomationExtension", False)
-    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_experimental_option(
+        "excludeSwitches", ["enable-automation"])
+    chrome_options.add_experimental_option(
+        "useAutomationExtension", False)
+    chrome_options.add_argument(
+        "--disable-blink-features=AutomationControlled")
 
     if with_ublock:
         chrome_options.add_extension(
@@ -88,7 +107,9 @@ def initialize_driver(headless=True, with_ublock=False, no_sandbox=False, chrome
     driver.execute_cdp_cmd(
         "Network.setUserAgentOverride",
         {
-            "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"
+            "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/83.0.4103.97 Safari/537.36"
         },
     )
     driver.execute_cdp_cmd(
@@ -106,19 +127,23 @@ def initialize_driver(headless=True, with_ublock=False, no_sandbox=False, chrome
         log.debug("Configuring uBlock")
 
         # set up uBlock
-        driver.get("chrome-extension://ilchdfhfciidacichehpmmjclkbfaecg/settings.html")
+        driver.get(
+            "chrome-extension://ilchdfhfciidacichehpmmjclkbfaecg/settings.html"
+        )
 
         # Un-hide the file upload button so we can use it
         element = driver.find_elements_by_class_name("hidden")
         driver.execute_script(
-            "document.getElementsByClassName('hidden')[0].className = ''", element
+            "document.getElementsByClassName('hidden')[0].className = ''",
+            element
         )
         # scroll down (for debugging)
         driver.execute_script("window.scrollTo(0, 2000)")
         uBlock_settings_file = str(
             os.path.join(os.getcwd(), "bin", "ublock", "ublock-settings.txt")
         )
-        driver.find_element_by_id("restoreFilePicker").send_keys(uBlock_settings_file)
+        driver.find_element_by_id(
+            "restoreFilePicker").send_keys(uBlock_settings_file)
         try:
             WebDriverWait(driver, 3).until(EC.alert_is_present())
             # click ok on pop up to accept overwrite
@@ -164,28 +189,33 @@ def login(driver, language, email, password):
     # navigate to the login page
     sign_in_url = f"https://www.blinkist.com/{language}/nc/login"
     driver.get(sign_in_url)
-	
-	# click on cookie banner, if necessary
-    time.sleep(1.0)
+
+    # click on cookie banner, if necessary
     try:
-        cookiebanner = driver.find_element_by_class_name("cookie-disclaimer__cta")
-    except:
+        WebDriverWait(driver, 3).until(
+            EC.presence_of_element_located(
+                (By.CLASS_NAME, "cookie-disclaimer__cta")
+            )
+        )
+        driver.find_element_by_class_name(
+            "cookie-disclaimer__cta").click()
+    except Exception:
         pass
-    else:
-        cookiebanner.click()
-	
-	# check for the login email input. if not found, assume we're logged in
+
+    # check for the login email input. if not found, assume we're logged in
     try:
         driver.find_element_by_id("login-form_login_email")
     except NoSuchElementException:
         is_logged_in = True
-    
+
     # if not logged in, autofill the email and password inputs with the
     # provided login credentials
     if not is_logged_in:
         log.info("Not logged into Blinkist. Logging in...")
-        driver.find_element_by_id("login-form_login_email").send_keys(email)
-        driver.find_element_by_id("login-form_login_password").send_keys(password)
+        driver.find_element_by_id(
+            "login-form_login_email").send_keys(email)
+        driver.find_element_by_id(
+            "login-form_login_password").send_keys(password)
         # click the "login" button
         driver.find_element_by_name("commit").click()
 
@@ -209,7 +239,9 @@ def login(driver, language, email, password):
     return True
 
 
-def get_categories(driver, language, specified_categories=None, ignored_categories=[]):
+def get_categories(
+    driver, language, specified_categories=None, ignored_categories=[]
+):
     url_with_categories = f"https://www.blinkist.com/{language}/nc/login"
     driver.get(url_with_categories)
     categories_links = []
@@ -227,10 +259,24 @@ def get_categories(driver, language, specified_categories=None, ignored_categori
 
     # click the discover dropdown to reveal categories links
     try:
-        categories_menu = driver.find_element_by_class_name("header-menu__trigger")
+        WebDriverWait(driver, 45).until(
+                EC.presence_of_element_located(
+                    (By.CLASS_NAME, "header-menu__trigger")
+                )
+            )
+        categories_menu = driver.find_element_by_class_name(
+            "header-menu__trigger")
         categories_menu.click()
     except NoSuchElementException:
         log.warning("Could not find categories dropdown element")
+        return
+    except ElementNotVisibleException:
+        # element not interactable
+        log.debug("Found the dropdown element, but could not click it. "
+                  "Using fallback JS code.")
+        driver.execute_script(
+            "document.querySelector('.header-menu__trigger').click()"
+        )
 
     # find the categories links container
     categories_list = None
@@ -239,33 +285,46 @@ def get_categories(driver, language, specified_categories=None, ignored_categori
         try:
             categories_list = driver.find_element_by_class_name(classname)
             break
-        except:
-            log.warning(
-                f"Could not find categories container element with class '{classname}'"
-            )
+        except Exception:
+            log.debug(
+                "Could not find categories container element with class "
+                f"'{classname}'")
+    else:
+        log.warning(
+            "Could not find a categories container element")
 
     # parse the invidual category links
     categories_items = categories_list.find_elements_by_tag_name("li")
     for item in categories_items:
         link = item.find_element_by_tag_name("a")
         href = link.get_attribute("href")
-        label = link.find_element_by_tag_name("span").get_attribute("innerHTML")
+        label = link.find_element_by_tag_name("span").get_attribute(
+            "innerHTML")
 
         # Do not add this category if specific_categories is specified AND
         # the label doesn't contain anything specified there
         if specified_categories:
             if not list(
-                filter(lambda oc: oc.lower() in label.lower(), specified_categories)
+                filter(
+                    lambda oc: oc.lower() in label.lower(),
+                    specified_categories
+                )
             ):
                 continue
-        # Do not add this category if the label contains any strings from ignored_categories
-        if list(filter(lambda ic: ic.lower() in label.lower(), ignored_categories)):
+        # Do not add this category if the label contains any strings from
+        # ignored_categories
+        if list(
+            filter(lambda ic: ic.lower() in label.lower(), ignored_categories)
+        ):
             continue
 
-        category = {"label": " ".join(label.split()).replace("&amp;", "&"), "url": href}
+        category = {
+            "label": " ".join(label.split()).replace("&amp;", "&"), "url": href
+        }
         categories_links.append(category)
     log.info(
-        f"Scraping categories: {', '.join([c['label'] for c in categories_links])}"
+        "Scraping categories: "
+        f"{', '.join([c['label'] for c in categories_links])}"
     )
     return categories_links
 
@@ -283,17 +342,16 @@ def get_all_books_for_categories(driver, category):
 
 
 def get_all_books(driver, match_language):
-    log.info(f"Getting all Blinkist books from sitemap...")
+    log.info("Getting all Blinkist books from sitemap...")
     all_books_links = []
     driver.get("https://www.blinkist.com/en/sitemap")
-    
+
+    selector = ".sitemap__section.sitemap__section--books a"
     if match_language:
-        selector = f".sitemap__section.sitemap__section--books a[href$='{match_language}']"
-    else:
-        selector = ".sitemap__section.sitemap__section--books a"
+        selector += f"[href$='{match_language}']"
 
     books_items = driver.find_elements_by_css_selector(selector)
-    
+
     for item in books_items:
         href = item.get_attribute("href")
         all_books_links.append(href)
@@ -303,7 +361,8 @@ def get_all_books(driver, match_language):
 
 def get_daily_book_url(driver, language):
     driver.get(f"https://www.blinkist.com/{language}/nc/daily")
-    daily_book_url = driver.find_element_by_css_selector(".daily-book__infos a")
+    daily_book_url = driver.find_element_by_css_selector(
+        ".daily-book__infos a")
     if daily_book_url:
         return daily_book_url.get_attribute("href")
     else:
@@ -317,18 +376,22 @@ def detect_needs_upgrade(driver):
         log.warn('Book is not available on the selected account. Exiting...')
         driver.close()
         log.info('Go Premium and get the best of Blinkist: '
-                 + 'https://www.blinkist.com/nc/plans')
+                 'https://www.blinkist.com/nc/plans')
         # exit the scraper
         exit()
 
 
 def scrape_book_data(
-    driver, book_url, match_language="", category={"label": "Uncategorized"}, force=False
+    driver, book_url, match_language="", category={"label": "Uncategorized"},
+    force=False
 ):
-    # check if this book has already been dumped, unless we are forcing scraping
-    # if so return the content of the dump, alonside with a flash saying it already existed
+    # check if this book has already been dumped, unless we are forcing
+    # scraping, if so return the content of the dump, alonside with a flash
+    # saying it already existed
     if os.path.exists(get_book_dump_filename(book_url)) and not force:
-        log.debug(f"Json dump for book {book_url} already exists, skipping scraping...")
+        log.debug(
+            f"Json dump for book {book_url} already exists, skipping "
+            "scraping...")
         with open(get_book_dump_filename(book_url)) as f:
             return json.load(f), True
 
@@ -347,16 +410,19 @@ def scrape_book_data(
 
     # get the book's metadata from the blinkist API using its ID
     book_id = reader.get_attribute("data-book-id")
-    book_json = requests.get(url=f"https://api.blinkist.com/v4/books/{book_id}").json()
+    book_json = requests.get(
+        url=f"https://api.blinkist.com/v4/books/{book_id}").json()
     book = book_json["book"]
 
     if match_language and book["language"] != match_language:
         log.warning(
-            f"Book not available in the selected language ({match_language}), skipping scraping..."
+            f"Book not available in the selected language ({match_language}), "
+            "skipping scraping..."
         )
         return None, False
 
-    # sanitize the book's title and author since they will be used for paths and such
+    # sanitize the book's title and author since they will be used for paths
+    # and such
     book["title"] = sanitize_name(book["title"])
     book["author"] = sanitize_name(book["author"])
 
@@ -364,35 +430,42 @@ def scrape_book_data(
     # (this is the case for the free book of the day)
     json_needs_content = False
     for chapter_json in book["chapters"]:
-        if not "text" in chapter_json:
+        if "text" not in chapter_json:
             json_needs_content = True
             break
         else:
-            # change the text content key name for compatibility with the script methods
+            # change the text content key name for compatibility with the
+            # script methods
             chapter_json["content"] = chapter_json.pop("text")
 
     if json_needs_content:
         # scrape the chapter's content on the reader page
         # and extend the book json data by inserting the scraped content
         # in the appropriate chapter section to get a complete data file
-        book_chapters = driver.find_elements(By.CSS_SELECTOR, ".chapter.chapter")
+        book_chapters = driver.find_elements(
+            By.CSS_SELECTOR, ".chapter.chapter")
         for chapter in book_chapters:
             chapter_no = chapter.get_attribute("data-chapterno")
-            chapter_content = chapter.find_element_by_class_name("chapter__content")
+            chapter_content = chapter.find_element_by_class_name(
+                "chapter__content")
             for chapter_json in book["chapters"]:
                 if chapter_json["order_no"] == int(chapter_no):
-                    chapter_json["content"] = chapter_content.get_attribute("innerHTML")
+                    chapter_json["content"] = chapter_content.get_attribute(
+                        "innerHTML")
                     break
 
         # look for any supplement sections
-        book_supplements = driver.find_elements(By.CSS_SELECTOR, ".chapter.supplement")
+        book_supplements = driver.find_elements(
+            By.CSS_SELECTOR, ".chapter.supplement")
         for supplement in book_supplements:
             chapter_no = supplement.get_attribute("data-chapterno")
-            supplement_content = chapter.find_element_by_class_name("chapter__content")
+            supplement_content = chapter.find_element_by_class_name(
+                "chapter__content")
             for chapter_json in book["chapters"]:
                 if chapter_json["order_no"] == int(chapter_no):
                     if not chapter_json.get("supplement", None):
-                        supplement_text = supplement_content.get_attribute("innerHTML")
+                        supplement_text = supplement_content.get_attribute(
+                            "innerHTML")
                         chapter_json["supplement"] = supplement_text
                     break
 
@@ -402,8 +475,8 @@ def scrape_book_data(
     # store the book json metadata for future use
     dump_book(book)
 
-    # return a tuple with the book json metadata, and a boolean indicating whether
-    # the json dump already existed or not
+    # return a tuple with the book json metadata, and a boolean indicating
+    # whether the json dump already existed or not
     return book, False
 
 
@@ -421,16 +494,20 @@ def scrape_book_audio(driver, book_json, language):
     # check if the book actually has audio blinks
     if not (book_json["is_audio"]):
         log.debug(
-            f"Book {book_json['slug']} does not have audio blinks, skipping scraping audio..."
+            f"Book {book_json['slug']} does not have audio blinks, "
+            "skipping scraping audio..."
         )
         return False
 
-    # clear out previous captured requests and restrict scope to the blinkist site
+    # clear out previous captured requests and restrict scope to the blinkist
+    # site
     del driver.requests
     driver.scopes = [".*blinkist.*"]
 
-    # navigate to the book's reader page which also contains the media player for the first audio blink
-    book_reader_url = f'https://www.blinkist.com/{language}/nc/reader/{book_json["slug"]}'
+    # navigate to the book's reader page which also contains the media player
+    # for the first audio blink
+    book_reader_url = (
+        f'https://www.blinkist.com/{language}/nc/reader/{book_json["slug"]}')
 
     log.info(f"Scraping book audio at {book_reader_url}")
     driver.get(book_reader_url)
@@ -451,19 +528,27 @@ def scrape_book_audio(driver, book_json, language):
     audio_files = []
     error = False
 
-    # using requests instead of urllib.request to fetch the audio seems to trigger Cloudflare's captcha
-    # see https://stackoverflow.com/questions/62684468/pythons-requests-triggers-cloudflares-security-while-urllib-does-not
-    import urllib.request, json, gzip
+    # using requests instead of urllib.request to fetch the audio seems to
+    # trigger Cloudflare's captcha
+    # see https://stackoverflow.com/questions/62684468
+    # /pythons-requests-triggers-cloudflares-security-while-urllib-does-not
+    import urllib.request
+    import json
+    import gzip
 
     # go through every chapter object in the book json data
     # and build a request to the audio endpoint using the book and chapter ID
     for chapter_json in book_json["chapters"]:
         time.sleep(1.0)
-        api_url = f"https://www.blinkist.com/api/books/{book_json['id']}/chapters/{chapter_json['id']}/audio"
+        api_url = (
+            f"https://www.blinkist.com/api/books/{book_json['id']}"
+            f"/chapters/{chapter_json['id']}/audio")
         log.debug(f"Fetching blink audio from: {api_url}")
         try:
-            audio_request = urllib.request.Request(api_url, headers=audio_request_headers)
-            audio_request_content = urllib.request.urlopen(audio_request).read()
+            audio_request = urllib.request.Request(
+                api_url, headers=audio_request_headers)
+            audio_request_content = urllib.request.urlopen(
+                audio_request).read()
             audio_request_json = json.loads(
                 gzip.decompress(audio_request_content).decode("utf-8")
             )
@@ -475,13 +560,16 @@ def scrape_book_audio(driver, book_json, language):
                 audio_files.append(audio_file)
             else:
                 log.warning(
-                    "Could not find audio url in request, aborting audio scrape..."
+                    "Could not find audio url in request, aborting audio "
+                    "scrape..."
                 )
                 error = True
                 break
         except json.decoder.JSONDecodeError:
             log.error(f"Received malformed json data: {audio_request.text}")
-            log.warning("Could not find audio url in request, aborting audio scrape...")
+            log.warning(
+                "Could not find audio url in request, aborting audio "
+                "scrape...")
             error = True
             break
         except Exception as e:
@@ -504,13 +592,16 @@ def download_book_chapter_audio(book_json, chapter_no, audio_url):
         os.makedirs(filepath)
     if not os.path.exists(audio_file):
         log.info(
-            f"Downloading audio file for blink {chapter_no} of {book_json['slug']}..."
+            f"Downloading audio file for blink {chapter_no} of "
+            f"{book_json['slug']}..."
         )
         download_request = requests.get(audio_url)
         with open(audio_file, "wb") as outfile:
             outfile.write(download_request.content)
     else:
-        log.debug(f"Audio for blink {chapter_no} already downloaded, skipping...")
+        log.debug(
+            f"Audio for blink {chapter_no} already downloaded, "
+            "skipping...")
     return audio_file
 
 
@@ -540,7 +631,8 @@ def download_book_cover_image(
 
     # variable size/resolution: (default is 640*640 px)
     cover_img_url_tmplt = book_json["images"]["url_template"]
-    cover_img_url = cover_img_url_tmplt.replace("%type%", type).replace("%size%", size)
+    cover_img_url = cover_img_url_tmplt.replace(
+        "%type%", type).replace("%size%", size)
 
     filepath = get_book_pretty_filepath(book_json)
     cover_img_file = os.path.join(filepath, filename)
